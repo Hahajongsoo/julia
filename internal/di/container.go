@@ -5,10 +5,15 @@ import (
 	"julia/internal/handlers"
 	"julia/internal/repositories"
 	"julia/internal/services"
+	"net/http"
+	"os"
+	"time"
 )
 
 type Container struct {
-	UserHandler *handlers.UserHandler
+	UserHandler  *handlers.UserHandler
+	LoginHandler *handlers.LoginHandler
+	AuthService  services.AuthService
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -16,7 +21,17 @@ func NewContainer(db *sql.DB) *Container {
 	userSvc := services.NewUserService(userRepo)
 	userHdl := handlers.NewUserHandler(userSvc)
 
+	authSvc := services.NewAuthService(userRepo, services.Config{
+		SessionTTL: 30 * time.Minute,
+		HMACSecret: []byte(os.Getenv("HMAC_SECRET")),
+		CookieName: "my-session",
+		CookiePath: "/",
+		Secure:     false,
+		SameSite:   http.SameSiteLaxMode,
+	})
 	return &Container{
-		UserHandler: userHdl,
+		UserHandler:  userHdl,
+		LoginHandler: handlers.NewLoginHandler(authSvc),
+		AuthService:  authSvc,
 	}
 }

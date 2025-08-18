@@ -17,6 +17,11 @@ type ResponseUser struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type LoginRequest struct {
+	ID       string `json:"id"`
+	Password string `json:"password"`
+}
+
 func (u *User) ToResponseUser() *ResponseUser {
 	return &ResponseUser{
 		ID:        u.ID,
