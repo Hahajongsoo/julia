@@ -39,10 +39,10 @@ func (r *userRepository) GetUserByID(id string) (*models.User, error) {
 
 func (r *userRepository) CreateUser(user *models.User) error {
 	query := `
-		INSERT INTO users (id, password, phone, class_id, created_at) 
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO users (id, password, phone, class_id, created_at, role) 
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	_, err := r.db.Exec(query, user.ID, user.Password, user.Phone, user.ClassID, user.CreatedAt)
+	_, err := r.db.Exec(query, user.ID, user.Password, user.Phone, user.ClassID, user.CreatedAt, user.Role)
 	if err != nil {
 		return err
 	}

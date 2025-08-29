@@ -8,6 +8,7 @@ type User struct {
 	Phone     string    `json:"phone"`
 	ClassID   *int64    `json:"class_id"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
 }
 
 type ResponseUser struct {
