@@ -31,3 +31,11 @@ func (u *User) ToResponseUser() *ResponseUser {
 		CreatedAt: u.CreatedAt,
 	}
 }
+
+type Makeup struct {
+	MakeupID string    `json:"makeup_id"`
+	UserID   string    `json:"user_id" binding:"required"`
+	Date     time.Time `json:"makeup_date" binding:"required" time_format:"2006-01-02"`
+	Time     time.Time `json:"start_time" binding:"required" time_format:"15:04"`
+	Reason   string    `json:"reason" binding:"required" `
+}

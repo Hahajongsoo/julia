@@ -9,7 +9,7 @@ import (
 
 func SetupRouter(router *gin.Engine, c *di.Container) {
 	user := router.Group("/users")
-	user.Use(middlewares.AuthMiddleware(c.AuthService))
+	// user.Use(middlewares.AuthMiddleware(c.AuthService))
 	{
 		user.GET("/:id", c.UserHandler.GetByID)
 		user.POST("/", c.UserHandler.Create)
@@ -20,5 +20,13 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	{
 		auth.POST("/login", c.LoginHandler.Login)
 		auth.POST("/logout", middlewares.AuthMiddleware(c.AuthService), c.LoginHandler.Logout)
+	}
+	makeup := router.Group("/makeups")
+	{
+		makeup.GET("/:date", c.MakeupHandler.GetMakeupsByDate)
+		makeup.GET("/:date/:userID", c.MakeupHandler.GetMakeupsByIDandDate)
+		makeup.POST("/", c.MakeupHandler.CreateMakeup)
+		makeup.PUT("/:date/:userID/:time", c.MakeupHandler.UpdateMakeup)
+		makeup.DELETE("/:date/:userID/:time", c.MakeupHandler.DeleteMakeup)
 	}
 }
