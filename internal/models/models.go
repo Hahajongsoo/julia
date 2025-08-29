@@ -35,7 +35,43 @@ func (u *User) ToResponseUser() *ResponseUser {
 type Makeup struct {
 	MakeupID string    `json:"makeup_id"`
 	UserID   string    `json:"user_id" binding:"required"`
-	Date     time.Time `json:"makeup_date" binding:"required" time_format:"2006-01-02"`
-	Time     time.Time `json:"start_time" binding:"required" time_format:"15:04"`
+	Date     time.Time `json:"makeup_date" binding:"required"`
+	Time     time.Time `json:"start_time" binding:"required"`
 	Reason   string    `json:"reason" binding:"required" `
+}
+
+type MakeupDTO struct {
+	MakeupID string `json:"makeup_id"`
+	UserID   string `json:"user_id"`
+	Date     string `json:"makeup_date"`
+	Time     string `json:"start_time"`
+	Reason   string `json:"reason"`
+}
+
+func (m *Makeup) ToMakeupDTO() *MakeupDTO {
+	return &MakeupDTO{
+		MakeupID: m.MakeupID,
+		UserID:   m.UserID,
+		Date:     m.Date.Format("2006-01-02"),
+		Time:     m.Time.Format("15:04"),
+		Reason:   m.Reason,
+	}
+}
+
+func (m *MakeupDTO) ToMakeup() *Makeup {
+	date, err := time.Parse("2006-01-02", m.Date)
+	if err != nil {
+		return nil
+	}
+	startTime, err := time.Parse("15:04", m.Time)
+	if err != nil {
+		return nil
+	}
+	return &Makeup{
+		MakeupID: m.MakeupID,
+		UserID:   m.UserID,
+		Date:     date,
+		Time:     startTime,
+		Reason:   m.Reason,
+	}
 }
