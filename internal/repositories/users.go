@@ -24,13 +24,13 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 func (r *userRepository) GetUserByID(id string) (*models.User, error) {
 	query := `
-		SELECT id, password, phone, class_id, created_at 
+		SELECT id, password, phone, class_id, created_at, role
 		FROM users 
 		WHERE id = $1
 	`
 	row := r.db.QueryRow(query, id)
 	var user models.User
-	err := row.Scan(&user.ID, &user.Password, &user.Phone, &user.ClassID, &user.CreatedAt)
+	err := row.Scan(&user.ID, &user.Password, &user.Phone, &user.ClassID, &user.CreatedAt, &user.Role)
 	if err != nil {
 		return nil, err
 	}

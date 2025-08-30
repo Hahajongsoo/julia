@@ -14,6 +14,7 @@ type Container struct {
 	UserHandler   *handlers.UserHandler
 	LoginHandler  *handlers.LoginHandler
 	AuthService   services.AuthService
+	UserService   services.UserService
 	MakeupHandler *handlers.MakeupHandler
 }
 
@@ -37,6 +38,7 @@ func NewContainer(db *sql.DB) *Container {
 		UserHandler:   userHdl,
 		LoginHandler:  handlers.NewLoginHandler(authSvc),
 		AuthService:   authSvc,
+		UserService:   userSvc,
 		MakeupHandler: makeupHdl,
 	}
 }
