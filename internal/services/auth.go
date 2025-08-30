@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"julia/internal/models"
 	"julia/internal/repositories"
 	"julia/utils"
 	"net/http"
@@ -36,6 +37,7 @@ type AuthService interface {
 	ParseAndVerifySID(rawCookie string) (sid string, err error)
 
 	VerifyCredential(id, password string) (string, error)
+	GetUserByID(userID string) (*models.User, error)
 
 	SessionName() string
 }
@@ -113,7 +115,7 @@ func (s *authService) IssueSessionCookie(w http.ResponseWriter, sid string) {
 		Name:     s.cfg.CookieName,
 		Path:     s.cfg.CookiePath,
 		MaxAge:   int(s.cfg.SessionTTL.Seconds()),
-		HttpOnly: true,
+		HttpOnly: false, // 개발 환경에서는 false로 설정
 		Secure:   s.cfg.Secure,
 		SameSite: s.cfg.SameSite,
 		Domain:   s.cfg.Domain,
@@ -125,7 +127,7 @@ func (s *authService) ClearSessionCookie(w http.ResponseWriter) {
 		Name:     s.cfg.CookieName,
 		Path:     s.cfg.CookiePath,
 		MaxAge:   0,
-		HttpOnly: true,
+		HttpOnly: false, // 개발 환경에서는 false로 설정
 		Secure:   s.cfg.Secure,
 		SameSite: s.cfg.SameSite,
 		Domain:   s.cfg.Domain,
@@ -152,4 +154,8 @@ func (s *authService) VerifyCredential(id, password string) (string, error) {
 		return "", errors.New("invalid password")
 	}
 	return user.ID, nil
+}
+
+func (s *authService) GetUserByID(userID string) (*models.User, error) {
+	return s.userRepo.GetUserByID(userID)
 }

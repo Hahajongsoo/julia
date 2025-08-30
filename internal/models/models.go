@@ -16,6 +16,7 @@ type ResponseUser struct {
 	Phone     string    `json:"phone"`
 	ClassID   *int64    `json:"class_id"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
 }
 
 type LoginRequest struct {
@@ -29,6 +30,7 @@ func (u *User) ToResponseUser() *ResponseUser {
 		Phone:     u.Phone,
 		ClassID:   u.ClassID,
 		CreatedAt: u.CreatedAt,
+		Role:      u.Role,
 	}
 }
 

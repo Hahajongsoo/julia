@@ -47,3 +47,26 @@ func (h *LoginHandler) Logout(c *gin.Context) {
 	h.authService.ClearSessionCookie(c.Writer)
 	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
 }
+
+// GetCurrentUser returns the current user information
+func (h *LoginHandler) GetCurrentUser(c *gin.Context) {
+	sessionValue, exists := c.Get("session")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "session not found"})
+		return
+	}
+	
+	session, ok := sessionValue.(*services.Session)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid session type"})
+		return
+	}
+	
+	user, err := h.authService.GetUserByID(session.UserID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, user.ToResponseUser())
+}
