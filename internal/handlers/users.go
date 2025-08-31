@@ -16,6 +16,19 @@ func NewUserHandler(userService services.UserService) *UserHandler {
 	return &UserHandler{userService: userService}
 }
 
+func (h *UserHandler) GetAll(c *gin.Context) {
+	users, err := h.userService.GetAllUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	responseUsers := make([]*models.ResponseUser, len(users))
+	for i, user := range users {
+		responseUsers[i] = user.ToResponseUser()
+	}
+	c.JSON(http.StatusOK, responseUsers)
+}
+
 func (h *UserHandler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 	user, err := h.userService.GetUserByID(id)
