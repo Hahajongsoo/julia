@@ -8,6 +8,7 @@ import (
 )
 
 type UserRepository interface {
+	GetAllUsers() ([]*models.User, error)
 	GetUserByID(id string) (*models.User, error)
 	CreateUser(user *models.User) error
 	UpdateUser(id string, user *models.User) error
@@ -20,6 +21,29 @@ type userRepository struct {
 
 func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepository{db: db}
+}
+
+func (r *userRepository) GetAllUsers() ([]*models.User, error) {
+	query := `
+		SELECT id, password, phone, class_id, created_at, role
+		FROM users
+		WHERE role != 'admin'
+	`
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Password, &user.Phone, &user.ClassID, &user.CreatedAt, &user.Role)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, nil
 }
 
 func (r *userRepository) GetUserByID(id string) (*models.User, error) {
@@ -39,10 +63,10 @@ func (r *userRepository) GetUserByID(id string) (*models.User, error) {
 
 func (r *userRepository) CreateUser(user *models.User) error {
 	query := `
-		INSERT INTO users (id, password, phone, class_id, created_at, role) 
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO users (id, password, phone, class_id, role) 
+		VALUES ($1, $2, $3, $4, $5)
 	`
-	_, err := r.db.Exec(query, user.ID, user.Password, user.Phone, user.ClassID, user.CreatedAt, user.Role)
+	_, err := r.db.Exec(query, user.ID, user.Password, user.Phone, user.ClassID, user.Role)
 	if err != nil {
 		return err
 	}

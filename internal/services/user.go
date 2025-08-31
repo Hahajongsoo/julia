@@ -8,6 +8,7 @@ import (
 
 type UserService interface {
 	GetUserByID(id string) (*models.User, error)
+	GetAllUsers() ([]*models.User, error)
 	CreateUser(user *models.User) error
 	UpdateUser(id string, user *models.User) error
 	DeleteUser(id string) error
@@ -23,6 +24,10 @@ func NewUserService(userRepo repositories.UserRepository) UserService {
 
 func (s *userService) GetUserByID(id string) (*models.User, error) {
 	return s.userRepo.GetUserByID(id)
+}
+
+func (s *userService) GetAllUsers() ([]*models.User, error) {
+	return s.userRepo.GetAllUsers()
 }
 
 func (s *userService) CreateUser(user *models.User) error {
