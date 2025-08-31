@@ -17,7 +17,7 @@ func ConnectDB() (*sql.DB, error) {
 	sslmode := os.Getenv("DB_SSLMODE")
 
 	if host == "" {
-		host = "172.17.0.1"
+		host = "postgres-dev"
 	}
 	if port == "" {
 		port = "5432"
@@ -32,7 +32,7 @@ func ConnectDB() (*sql.DB, error) {
 		password = "1234"
 	}
 	if dbname == "" {
-		dbname = "julia"
+		dbname = "julia_dev"
 	}
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
