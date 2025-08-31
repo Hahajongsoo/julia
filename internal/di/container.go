@@ -16,6 +16,7 @@ type Container struct {
 	AuthService   services.AuthService
 	UserService   services.UserService
 	MakeupHandler *handlers.MakeupHandler
+	PushHandler   *handlers.PushHandler
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -25,6 +26,9 @@ func NewContainer(db *sql.DB) *Container {
 	makeupRepo := repositories.NewMakeupRepository(db)
 	makeupSvc := services.NewMakeupService(makeupRepo)
 	makeupHdl := handlers.NewMakeupHandler(makeupSvc)
+	pushRepo := repositories.NewPushRepository(db)
+	pushSvc := services.NewPushService(pushRepo)
+	pushHdl := handlers.NewPushHandler(pushSvc)
 
 	authSvc := services.NewAuthService(userRepo, services.Config{
 		SessionTTL: 30 * time.Minute,
@@ -40,5 +44,6 @@ func NewContainer(db *sql.DB) *Container {
 		AuthService:   authSvc,
 		UserService:   userSvc,
 		MakeupHandler: makeupHdl,
+		PushHandler:   pushHdl,
 	}
 }

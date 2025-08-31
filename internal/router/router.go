@@ -36,6 +36,13 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		makeup.PUT("/user/:userID/date/:date/time/:time", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.MakeupHandler.UpdateMakeup)
 		makeup.DELETE("/user/:userID/date/:date/time/:time", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.MakeupHandler.DeleteMakeup)
 	}
+	push := router.Group("/push")
+	{
+		push.POST("/subscriptions", c.PushHandler.CreateSubscription)
+		push.DELETE("/subscriptions/:userID", c.PushHandler.DeleteSubscription)
+		push.GET("/subscriptions/:userID", c.PushHandler.GetSubscriptions)
+		push.POST("/notifications/:userID", c.PushHandler.SendNotification)
+	}
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "OK"})
 	})

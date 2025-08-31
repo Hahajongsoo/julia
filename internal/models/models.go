@@ -77,3 +77,27 @@ func (m *MakeupDTO) ToMakeup() *Makeup {
 		Reason:   m.Reason,
 	}
 }
+
+type Subscription struct {
+	UserID    string    `json:"user_id"`
+	Endpoint  string    `json:"endpoint"`
+	P256dh    string    `json:"p256dh"`
+	Auth      string    `json:"auth"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type SubscriptionKeys struct {
+	P256dh string `json:"p256dh"`
+	Auth   string `json:"auth"`
+}
+
+type SubscriptionRequest struct {
+	UserID   string           `json:"user_id" binding:"required"`
+	Endpoint string           `json:"endpoint" binding:"required"`
+	Keys     SubscriptionKeys `json:"keys"`
+}
+
+type DeleteSubscriptionRequest struct {
+	Endpoint string `json:"endpoint" binding:"required"`
+}

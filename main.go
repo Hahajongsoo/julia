@@ -16,8 +16,7 @@ func main() {
 	}
 
 	container := di.NewContainer(db)
-
-	r := gin.Default()
-	router.SetupRouter(r, container)
-	r.Run(":8080")
-}
+		r := gin.Default()
+		router.SetupRouter(r, container)
+		r.Run(":8080")
+	}
