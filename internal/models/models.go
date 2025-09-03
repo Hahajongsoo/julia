@@ -103,6 +103,6 @@ type DeleteSubscriptionRequest struct {
 }
 
 type Class struct {
-	ClassID   int64  `json:"class_id" binding:"required"`
+	ClassID   int64  `json:"class_id"`
 	ClassName string `json:"class_name" binding:"required"`
 }

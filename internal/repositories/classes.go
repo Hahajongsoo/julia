@@ -24,6 +24,7 @@ func (r *classRepository) GetAllClasses() ([]*models.Class, error) {
 	query := `
 		SELECT class_id, class_name
 		FROM classes
+		ORDER BY class_id
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -44,10 +45,10 @@ func (r *classRepository) GetAllClasses() ([]*models.Class, error) {
 
 func (r *classRepository) CreateClass(class *models.Class) error {
 	query := `
-		INSERT INTO classes (class_id, class_name)
-		VALUES ($1, $2, $3)
+		INSERT INTO classes (class_name)
+		VALUES ($1)
 	`
-	_, err := r.db.Exec(query, class.ClassID, class.ClassName)
+	_, err := r.db.Exec(query, class.ClassName)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,7 @@ func (r *classRepository) UpdateClass(class *models.Class) error {
 	query := `
 		UPDATE classes
 		SET class_name = $1
-		WHERE class_id = $3
+		WHERE class_id = $2
 	`
 	_, err := r.db.Exec(query, class.ClassName, class.ClassID)
 	if err != nil {
