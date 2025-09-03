@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	worker := workers.Worker{DB: db}
+	worker := workers.NewWorker(db, nil)
 	go worker.Start(context.Background())
 
 	container := di.NewContainer(db)
