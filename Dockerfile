@@ -19,8 +19,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 # 최종 이미지
 FROM alpine:latest
 
-# ca-certificates 설치 (HTTPS 요청을 위해)
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add tzdata ca-certificates
 
 WORKDIR /root/
 

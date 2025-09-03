@@ -8,9 +8,10 @@ import (
 )
 
 func SetupRouter(router *gin.Engine, c *di.Container) {
+	router.Use(middlewares.CustomLoggerMiddleware())
 	router.Use(middlewares.CORSMiddleware())
+
 	user := router.Group("/users")
-	// user.Use(middlewares.AuthMiddleware(c.AuthService))
 	{
 		user.GET("", c.UserHandler.GetAll)
 		user.GET("/:id", c.UserHandler.GetByID)
