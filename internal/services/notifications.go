@@ -58,15 +58,15 @@ func (s *notificationService) EnqueueMakeupNotifications(m *models.Makeup) error
 		thirtyMinBefore = now
 	}
 
-	if err := s.notifRepo.UpsertScheduled(m.MakeupID, m.UserID, "makeup-1d", oneDayBefore.UTC()); err != nil {
+	if err := s.notifRepo.UpsertNotification(m.MakeupID, m.UserID, "makeup-1d", oneDayBefore.UTC()); err != nil {
 		return err
 	}
-	if err := s.notifRepo.UpsertScheduled(m.MakeupID, m.UserID, "makeup-30m", thirtyMinBefore.UTC()); err != nil {
+	if err := s.notifRepo.UpsertNotification(m.MakeupID, m.UserID, "makeup-30m", thirtyMinBefore.UTC()); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *notificationService) CancelMakeupNotifications(userID, date, time string) error {
-	return s.notifRepo.CancelByMakeup(userID, date, time)
+	return s.notifRepo.CancelNotificationByMakeup(userID, date, time)
 }
