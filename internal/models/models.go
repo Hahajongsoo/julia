@@ -35,7 +35,7 @@ func (u *User) ToResponseUser() *ResponseUser {
 }
 
 type Makeup struct {
-	MakeupID string    `json:"makeup_id"`
+	MakeupID int64     `json:"makeup_id"`
 	UserID   string    `json:"user_id" binding:"required"`
 	Date     time.Time `json:"makeup_date" binding:"required"`
 	Time     time.Time `json:"start_time" binding:"required"`
@@ -43,7 +43,7 @@ type Makeup struct {
 }
 
 type MakeupDTO struct {
-	MakeupID string `json:"makeup_id"`
+	MakeupID int64  `json:"makeup_id"`
 	UserID   string `json:"user_id"`
 	Date     string `json:"makeup_date"`
 	Time     string `json:"start_time"`

@@ -11,12 +11,13 @@ import (
 )
 
 type Container struct {
-	UserHandler   *handlers.UserHandler
-	LoginHandler  *handlers.LoginHandler
-	AuthService   services.AuthService
-	UserService   services.UserService
-	MakeupHandler *handlers.MakeupHandler
-	PushHandler   *handlers.PushHandler
+	UserHandler         *handlers.UserHandler
+	LoginHandler        *handlers.LoginHandler
+	AuthService         services.AuthService
+	UserService         services.UserService
+	MakeupHandler       *handlers.MakeupHandler
+	PushHandler         *handlers.PushHandler
+	NotificationService *services.NotificationService
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -25,7 +26,9 @@ func NewContainer(db *sql.DB) *Container {
 	userHdl := handlers.NewUserHandler(userSvc)
 	makeupRepo := repositories.NewMakeupRepository(db)
 	makeupSvc := services.NewMakeupService(makeupRepo)
-	makeupHdl := handlers.NewMakeupHandler(makeupSvc)
+	notificationRepo := repositories.NewNotificationRepository(db)
+	notificationSvc := services.NewNotificationService(notificationRepo)
+	makeupHdl := handlers.NewMakeupHandler(makeupSvc, notificationSvc)
 	pushRepo := repositories.NewPushRepository(db)
 	pushSvc := services.NewPushService(pushRepo)
 	pushHdl := handlers.NewPushHandler(pushSvc)

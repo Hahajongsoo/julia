@@ -9,11 +9,15 @@ import (
 )
 
 type MakeupHandler struct {
-	makeupService services.MakeupService
+	makeupService       services.MakeupService
+	notificationService services.NotificationService
 }
 
-func NewMakeupHandler(makeupService services.MakeupService) *MakeupHandler {
-	return &MakeupHandler{makeupService: makeupService}
+func NewMakeupHandler(makeupService services.MakeupService, notificationService services.NotificationService) *MakeupHandler {
+	return &MakeupHandler{
+		makeupService:       makeupService,
+		notificationService: notificationService,
+	}
 }
 
 func (h *MakeupHandler) GetAllMakeups(c *gin.Context) {
@@ -97,19 +101,23 @@ func (h *MakeupHandler) GetMakeupsByUserAndDate(c *gin.Context) {
 }
 
 func (h *MakeupHandler) CreateMakeup(c *gin.Context) {
-	var input *models.MakeupDTO
-	if err := c.ShouldBindJSON(&input); err != nil {
+	var dto *models.MakeupDTO
+	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	err := h.makeupService.CreateMakeup(input.ToMakeup())
+	makeup := dto.ToMakeup()
+	err := h.makeupService.CreateMakeup(makeup)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusCreated, input)
+	err = h.notificationService.EnqueueMakeupNotifications(makeup)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, dto)
 }
 
 func (h *MakeupHandler) UpdateMakeup(c *gin.Context) {
@@ -136,6 +144,11 @@ func (h *MakeupHandler) DeleteMakeup(c *gin.Context) {
 	date := c.Param("date")
 	time := c.Param("time")
 	err := h.makeupService.DeleteMakeup(userID, date, time)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	err = h.notificationService.CancelMakeupNotifications(userID, date, time)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
