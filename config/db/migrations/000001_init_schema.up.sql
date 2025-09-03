@@ -74,7 +74,7 @@ CREATE TABLE public.attendance (
 CREATE TABLE public.classes (
     class_id bigint NOT NULL,
     class_name text NOT NULL,
-    days public.weekday[] NOT NULL
+    days public.weekday[]
 );
 
 
