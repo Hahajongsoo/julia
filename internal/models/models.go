@@ -35,7 +35,7 @@ func (u *User) ToResponseUser() *ResponseUser {
 }
 
 type Makeup struct {
-	MakeupID string    `json:"makeup_id"`
+	MakeupID int64     `json:"makeup_id"`
 	UserID   string    `json:"user_id" binding:"required"`
 	Date     time.Time `json:"makeup_date" binding:"required"`
 	Time     time.Time `json:"start_time" binding:"required"`
@@ -43,7 +43,7 @@ type Makeup struct {
 }
 
 type MakeupDTO struct {
-	MakeupID string `json:"makeup_id"`
+	MakeupID int64  `json:"makeup_id"`
 	UserID   string `json:"user_id"`
 	Date     string `json:"makeup_date"`
 	Time     string `json:"start_time"`
@@ -76,4 +76,28 @@ func (m *MakeupDTO) ToMakeup() *Makeup {
 		Time:     startTime,
 		Reason:   m.Reason,
 	}
+}
+
+type Subscription struct {
+	UserID    string    `json:"user_id"`
+	Endpoint  string    `json:"endpoint"`
+	P256dh    string    `json:"p256dh"`
+	Auth      string    `json:"auth"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type SubscriptionKeys struct {
+	P256dh string `json:"p256dh"`
+	Auth   string `json:"auth"`
+}
+
+type SubscriptionRequest struct {
+	UserID   string           `json:"user_id" binding:"required"`
+	Endpoint string           `json:"endpoint" binding:"required"`
+	Keys     SubscriptionKeys `json:"keys"`
+}
+
+type DeleteSubscriptionRequest struct {
+	Endpoint string `json:"endpoint" binding:"required"`
 }
