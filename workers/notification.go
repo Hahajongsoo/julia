@@ -13,7 +13,6 @@ import (
 	"github.com/SherClockHolmes/webpush-go"
 )
 
-// 설정 구조체 추가
 type Config struct {
 	BatchInterval time.Duration
 	BatchSize     int
@@ -24,7 +23,6 @@ type Config struct {
 	TTL           int
 }
 
-// 기본 설정
 func DefaultConfig() *Config {
 	return &Config{
 		BatchInterval: 15 * time.Second,
@@ -52,7 +50,6 @@ func NewWorker(db *sql.DB, config *Config) *Worker {
 		config = DefaultConfig()
 	}
 
-	// 환경변수에서 VAPID 키 로드
 	if config.VAPIDPublic == "" {
 		config.VAPIDPublic = os.Getenv("VAPID_PUBLIC")
 	}
@@ -101,7 +98,6 @@ func (w *Worker) processBatch(ctx context.Context, limit int) error {
 	return w.processJobs(ctx, jobs)
 }
 
-// 작업 조회 함수 분리
 func (w *Worker) fetchPendingJobs(ctx context.Context, limit int) ([]dueJob, error) {
 	tx, err := w.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -153,7 +149,6 @@ func (w *Worker) fetchPendingJobs(ctx context.Context, limit int) ([]dueJob, err
 	return jobs, nil
 }
 
-// 작업 처리 함수 분리
 func (w *Worker) processJobs(ctx context.Context, jobs []dueJob) error {
 	for _, j := range jobs {
 		if err := w.sendMakeupNotification(ctx, j); err != nil {
@@ -181,7 +176,6 @@ func (w *Worker) sendMakeupNotification(ctx context.Context, j dueJob) error {
 	return w.sendToAllSubscriptions(ctx, j.ID, subscriptions, data)
 }
 
-// 구독 조회 함수 분리
 func (w *Worker) fetchUserSubscriptions(ctx context.Context, userID string) ([]*webpush.Subscription, error) {
 	rows, err := w.DB.QueryContext(ctx, `
 	  SELECT endpoint, p256dh, auth
@@ -211,7 +205,6 @@ func (w *Worker) fetchUserSubscriptions(ctx context.Context, userID string) ([]*
 	return subscriptions, nil
 }
 
-// 알림 페이로드 생성 함수 분리
 func (w *Worker) createNotificationPayload(kind string) map[string]string {
 	title, body, tag := payloadForKind(kind)
 	return map[string]string{
@@ -222,7 +215,6 @@ func (w *Worker) createNotificationPayload(kind string) map[string]string {
 	}
 }
 
-// 모든 구독에 전송하는 함수 분리
 func (w *Worker) sendToAllSubscriptions(ctx context.Context, jobID int64, subscriptions []*webpush.Subscription, data []byte) error {
 	for _, sub := range subscriptions {
 		if err := w.sendToSubscription(ctx, jobID, sub, data); err != nil {
@@ -232,7 +224,6 @@ func (w *Worker) sendToAllSubscriptions(ctx context.Context, jobID int64, subscr
 	return nil
 }
 
-// 개별 구독에 전송하는 함수 분리
 func (w *Worker) sendToSubscription(ctx context.Context, jobID int64, sub *webpush.Subscription, data []byte) error {
 	resp, err := webpush.SendNotification(data, sub, &webpush.Options{
 		Subscriber:      w.Config.SubscriberURL,
@@ -249,21 +240,17 @@ func (w *Worker) sendToSubscription(ctx context.Context, jobID int64, sub *webpu
 		return w.handleSendError(ctx, jobID, sub.Endpoint, resp, err)
 	}
 
-	// 성공적인 전송
 	return nil
 }
 
-// 전송 에러 처리 함수 분리
 func (w *Worker) handleSendError(ctx context.Context, jobID int64, endpoint string, resp *http.Response, err error) error {
 	if resp != nil {
-		// 만료된 구독 정리
 		if resp.StatusCode == http.StatusGone || resp.StatusCode == http.StatusNotFound {
 			log.Printf("[push-worker] 작업 %d: 만료된 구독 삭제 - %s", jobID, endpoint)
 			_, _ = w.DB.ExecContext(ctx, "DELETE FROM push_subscriptions WHERE endpoint=$1", endpoint)
 			return nil
 		}
 
-		// 응답 본문 읽기
 		if body, readErr := io.ReadAll(resp.Body); readErr == nil {
 			log.Printf("[push-worker] 작업 %d: 푸시 전송 실패 - %v, %s", jobID, err, string(body))
 		}
