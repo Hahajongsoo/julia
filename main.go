@@ -20,7 +20,7 @@ func main() {
 	go worker.Start(context.Background())
 
 	container := di.NewContainer(db)
-	r := gin.Default()
+	r := gin.New()
 	router.SetupRouter(r, container)
 	r.Run(":8080")
 }

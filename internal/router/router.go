@@ -8,6 +8,7 @@ import (
 )
 
 func SetupRouter(router *gin.Engine, c *di.Container) {
+	router.Use(gin.Recovery())
 	router.Use(middlewares.CustomLoggerMiddleware())
 	router.Use(middlewares.CORSMiddleware())
 
