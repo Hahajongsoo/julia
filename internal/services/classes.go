@@ -7,6 +7,7 @@ import (
 
 type ClassService interface {
 	GetAllClasses() ([]*models.Class, error)
+	GetClassByID(classID int64) (*models.Class, error)
 	CreateClass(class *models.Class) error
 	UpdateClass(class *models.Class) error
 	DeleteClass(classID int64) error
@@ -22,6 +23,10 @@ func NewClassService(classRepo repositories.ClassRepository) ClassService {
 
 func (s *classService) GetAllClasses() ([]*models.Class, error) {
 	return s.classRepo.GetAllClasses()
+}
+
+func (s *classService) GetClassByID(classID int64) (*models.Class, error) {
+	return s.classRepo.GetClassByID(classID)
 }
 
 func (s *classService) CreateClass(class *models.Class) error {

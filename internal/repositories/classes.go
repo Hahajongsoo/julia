@@ -7,6 +7,7 @@ import (
 
 type ClassRepository interface {
 	GetAllClasses() ([]*models.Class, error)
+	GetClassByID(classID int64) (*models.Class, error)
 	CreateClass(class *models.Class) error
 	UpdateClass(class *models.Class) error
 	DeleteClass(classID int64) error
@@ -41,6 +42,21 @@ func (r *classRepository) GetAllClasses() ([]*models.Class, error) {
 		classes = append(classes, &class)
 	}
 	return classes, nil
+}
+
+func (r *classRepository) GetClassByID(classID int64) (*models.Class, error) {
+	query := `
+		SELECT class_id, class_name
+		FROM classes
+		WHERE class_id = $1
+	`
+	row := r.db.QueryRow(query, classID)
+	var class models.Class
+	err := row.Scan(&class.ClassID, &class.ClassName)
+	if err != nil {
+		return nil, err
+	}
+	return &class, nil
 }
 
 func (r *classRepository) CreateClass(class *models.Class) error {

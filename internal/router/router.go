@@ -27,6 +27,7 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	classes.Use(middlewares.AdminAuthMiddleware(c.AuthService, c.UserService))
 	{
 		classes.GET("", c.ClassHandler.GetAllClasses)
+		classes.GET("/:classID", c.ClassHandler.GetClassByID)
 		classes.POST("", c.ClassHandler.CreateClass)
 		classes.PUT("/:classID", c.ClassHandler.UpdateClass)
 		classes.DELETE("/:classID", c.ClassHandler.DeleteClass)

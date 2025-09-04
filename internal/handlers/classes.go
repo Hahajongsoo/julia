@@ -26,6 +26,21 @@ func (h *ClassHandler) GetAllClasses(c *gin.Context) {
 	c.JSON(http.StatusOK, classes)
 }
 
+func (h *ClassHandler) GetClassByID(c *gin.Context) {
+	classID := c.Param("classID")
+	classIDInt, err := strconv.ParseInt(classID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	class, err := h.ClassService.GetClassByID(classIDInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, class)
+}
+
 func (h *ClassHandler) CreateClass(c *gin.Context) {
 	var class *models.Class
 	if err := c.ShouldBindJSON(&class); err != nil {
