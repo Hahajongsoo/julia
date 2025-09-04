@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"julia/internal/models"
 	"julia/internal/services"
@@ -16,6 +17,12 @@ type PushHandler struct {
 
 func NewPushHandler(pushService services.PushService) *PushHandler {
 	return &PushHandler{pushService: pushService}
+}
+
+func (h *PushHandler) GetVapidPublic(c *gin.Context) {
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.Header("Cache-Control", "no-store")
+	c.String(200, os.Getenv("VAPID_PUBLIC"))
 }
 
 func (h *PushHandler) CreateSubscription(c *gin.Context) {

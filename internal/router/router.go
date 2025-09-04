@@ -50,7 +50,9 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		makeup.DELETE("/user/:userID/date/:date/time/:time", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.MakeupHandler.DeleteMakeup)
 	}
 	push := router.Group("/push")
+	push.Use(middlewares.AuthMiddleware(c.AuthService))
 	{
+		push.GET("/vapid-public", c.PushHandler.GetVapidPublic)
 		push.POST("/subscriptions", c.PushHandler.CreateSubscription)
 		push.DELETE("/subscriptions/:userID", c.PushHandler.DeleteSubscription)
 		push.GET("/subscriptions/:userID", c.PushHandler.GetSubscriptions)
