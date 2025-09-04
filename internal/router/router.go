@@ -24,13 +24,12 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	}
 	classes := router.Group("/classes")
 	classes.Use(middlewares.AuthMiddleware(c.AuthService))
-	classes.Use(middlewares.AdminAuthMiddleware(c.AuthService, c.UserService))
 	{
 		classes.GET("", c.ClassHandler.GetAllClasses)
 		classes.GET("/:classID", c.ClassHandler.GetClassByID)
-		classes.POST("", c.ClassHandler.CreateClass)
-		classes.PUT("/:classID", c.ClassHandler.UpdateClass)
-		classes.DELETE("/:classID", c.ClassHandler.DeleteClass)
+		classes.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.CreateClass)
+		classes.PUT("/:classID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.UpdateClass)
+		classes.DELETE("/:classID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.DeleteClass)
 	}
 	auth := router.Group("/auth")
 	{
@@ -65,8 +64,10 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	examPeriod := router.Group("/exam-periods")
 	examPeriod.Use(middlewares.AuthMiddleware(c.AuthService))
 	{
+		examPeriod.GET("", c.ExamPeriodHandler.GetAllExamPeriods)
 		examPeriod.GET("/class/:classID", c.ExamPeriodHandler.GetExamPeriodByClassID)
-		examPeriod.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.UpsertExamPeriod)
+		examPeriod.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.CreateExamPeriod)
+		examPeriod.PUT("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.UpdateExamPeriod)
 		examPeriod.DELETE("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.DeleteExamPeriod)
 	}
 }
