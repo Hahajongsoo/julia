@@ -140,6 +140,7 @@ type ExamPeriod struct {
 	ExamPeriodID int64     `json:"exam_period_id"`
 	ClassID      int64     `json:"class_id"`
 	Name         string    `json:"name"`
+	Description  string    `json:"description"`
 	StartDate    time.Time `json:"start_date"`
 	EndDate      time.Time `json:"end_date"`
 }
@@ -148,6 +149,7 @@ type ExamPeriodDTO struct {
 	ExamPeriodID int64     `json:"exam_period_id"`
 	ClassID      int64     `json:"class_id"`
 	Name         string    `json:"name"`
+	Description  string    `json:"description"`
 	StartDate    string    `json:"start_date"`
 	EndDate      string    `json:"end_date"`
 	CreatedAt    time.Time `json:"created_at"`
@@ -159,6 +161,7 @@ func (e *ExamPeriod) ToExamPeriodDTO() *ExamPeriodDTO {
 		ExamPeriodID: e.ExamPeriodID,
 		ClassID:      e.ClassID,
 		Name:         e.Name,
+		Description:  e.Description,
 		StartDate:    e.StartDate.Format("2006-01-02"),
 		EndDate:      e.EndDate.Format("2006-01-02"),
 	}
@@ -179,6 +182,7 @@ func (e *ExamPeriodDTO) ToExamPeriod() *ExamPeriod {
 		ExamPeriodID: e.ExamPeriodID,
 		ClassID:      e.ClassID,
 		Name:         e.Name,
+		Description:  e.Description,
 		StartDate:    startDate,
 		EndDate:      endDate,
 	}
