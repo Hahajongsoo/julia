@@ -61,14 +61,23 @@ func (m *Makeup) ToMakeupDTO() *MakeupDTO {
 }
 
 func (m *MakeupDTO) ToMakeup() *Makeup {
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		loc = time.UTC
+	}
+	
 	date, err := time.Parse("2006-01-02", m.Date)
 	if err != nil {
 		return nil
 	}
+	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
+	
 	startTime, err := time.Parse("15:04", m.Time)
 	if err != nil {
 		return nil
 	}
+	startTime = time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, loc)
+	
 	return &Makeup{
 		MakeupID: m.MakeupID,
 		UserID:   m.UserID,
