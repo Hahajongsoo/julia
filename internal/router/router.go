@@ -62,4 +62,11 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "OK"})
 	})
+	examPeriod := router.Group("/exam-periods")
+	examPeriod.Use(middlewares.AuthMiddleware(c.AuthService))
+	{
+		examPeriod.GET("/class/:classID", c.ExamPeriodHandler.GetExamPeriodByClassID)
+		examPeriod.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.UpsertExamPeriod)
+		examPeriod.DELETE("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.DeleteExamPeriod)
+	}
 }

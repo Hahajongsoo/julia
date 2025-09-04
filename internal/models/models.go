@@ -34,6 +34,32 @@ func (u *User) ToResponseUser() *ResponseUser {
 	}
 }
 
+func parseDateString(dateStr string) (time.Time, error) {
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		loc = time.UTC
+	}
+
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc), nil
+}
+
+func parseTimeString(timeStr string) (time.Time, error) {
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		loc = time.UTC
+	}
+
+	startTime, err := time.Parse("15:04", timeStr)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, loc), nil
+}
+
 type Makeup struct {
 	MakeupID int64     `json:"makeup_id"`
 	UserID   string    `json:"user_id" binding:"required"`
@@ -61,23 +87,16 @@ func (m *Makeup) ToMakeupDTO() *MakeupDTO {
 }
 
 func (m *MakeupDTO) ToMakeup() *Makeup {
-	loc, err := time.LoadLocation("Asia/Seoul")
-	if err != nil {
-		loc = time.UTC
-	}
-	
-	date, err := time.Parse("2006-01-02", m.Date)
+	date, err := parseDateString(m.Date)
 	if err != nil {
 		return nil
 	}
-	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
-	
-	startTime, err := time.Parse("15:04", m.Time)
+
+	startTime, err := parseTimeString(m.Time)
 	if err != nil {
 		return nil
 	}
-	startTime = time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, loc)
-	
+
 	return &Makeup{
 		MakeupID: m.MakeupID,
 		UserID:   m.UserID,
@@ -115,4 +134,52 @@ type Class struct {
 	ClassID     int64  `json:"class_id"`
 	ClassName   string `json:"class_name" binding:"required"`
 	Description string `json:"description"`
+}
+
+type ExamPeriod struct {
+	ExamPeriodID int64     `json:"exam_period_id"`
+	ClassID      int64     `json:"class_id"`
+	Name         string    `json:"name"`
+	StartDate    time.Time `json:"start_date"`
+	EndDate      time.Time `json:"end_date"`
+}
+
+type ExamPeriodDTO struct {
+	ExamPeriodID int64     `json:"exam_period_id"`
+	ClassID      int64     `json:"class_id"`
+	Name         string    `json:"name"`
+	StartDate    string    `json:"start_date"`
+	EndDate      string    `json:"end_date"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func (e *ExamPeriod) ToExamPeriodDTO() *ExamPeriodDTO {
+	return &ExamPeriodDTO{
+		ExamPeriodID: e.ExamPeriodID,
+		ClassID:      e.ClassID,
+		Name:         e.Name,
+		StartDate:    e.StartDate.Format("2006-01-02"),
+		EndDate:      e.EndDate.Format("2006-01-02"),
+	}
+}
+
+func (e *ExamPeriodDTO) ToExamPeriod() *ExamPeriod {
+	startDate, err := parseDateString(e.StartDate)
+	if err != nil {
+		return nil
+	}
+
+	endDate, err := parseDateString(e.EndDate)
+	if err != nil {
+		return nil
+	}
+
+	return &ExamPeriod{
+		ExamPeriodID: e.ExamPeriodID,
+		ClassID:      e.ClassID,
+		Name:         e.Name,
+		StartDate:    startDate,
+		EndDate:      endDate,
+	}
 }

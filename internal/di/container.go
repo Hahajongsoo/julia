@@ -19,6 +19,7 @@ type Container struct {
 	PushHandler         *handlers.PushHandler
 	NotificationService *services.NotificationService
 	ClassHandler        *handlers.ClassHandler
+	ExamPeriodHandler   *handlers.ExamPeriodHandler
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -40,6 +41,10 @@ func NewContainer(db *sql.DB) *Container {
 	classSvc := services.NewClassService(classRepo)
 	classHdl := handlers.NewClassHandler(classSvc)
 
+	examPeriodRepo := repositories.NewExamPeriodRepository(db)
+	examPeriodSvc := services.NewExamPeriodService(examPeriodRepo)
+	examPeriodHdl := handlers.NewExamPeriodHandler(examPeriodSvc)
+
 	authSvc := services.NewAuthService(userRepo, services.Config{
 		SessionTTL: 30 * time.Minute,
 		HMACSecret: []byte(os.Getenv("HMAC_SECRET")),
@@ -52,12 +57,13 @@ func NewContainer(db *sql.DB) *Container {
 	loginHdl := handlers.NewLoginHandler(authSvc)
 
 	return &Container{
-		UserHandler:   userHdl,
-		LoginHandler:  loginHdl,
-		AuthService:   authSvc,
-		UserService:   userSvc,
-		MakeupHandler: makeupHdl,
-		PushHandler:   pushHdl,
-		ClassHandler:  classHdl,
+		UserHandler:       userHdl,
+		LoginHandler:      loginHdl,
+		AuthService:       authSvc,
+		UserService:       userSvc,
+		MakeupHandler:     makeupHdl,
+		PushHandler:       pushHdl,
+		ClassHandler:      classHdl,
+		ExamPeriodHandler: examPeriodHdl,
 	}
 }
