@@ -4,7 +4,8 @@ CREATE TABLE public.exam_periods (
     name TEXT NOT NULL,
     description TEXT,
     start_date DATE NOT NULL,                
-    end_date DATE NOT NULL,                  
+    end_date DATE NOT NULL,
+    english_date DATE,              
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
 
