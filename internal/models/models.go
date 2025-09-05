@@ -68,6 +68,7 @@ type Makeup struct {
 	Date     time.Time `json:"makeup_date" binding:"required"`
 	Time     time.Time `json:"start_time" binding:"required"`
 	Reason   string    `json:"reason" binding:"required" `
+	Status   string    `json:"status"`
 }
 
 type MakeupDTO struct {
@@ -76,6 +77,7 @@ type MakeupDTO struct {
 	Date     string `json:"makeup_date"`
 	Time     string `json:"start_time"`
 	Reason   string `json:"reason"`
+	Status   string `json:"status"`
 }
 
 func (m *Makeup) ToMakeupDTO() *MakeupDTO {
@@ -85,6 +87,7 @@ func (m *Makeup) ToMakeupDTO() *MakeupDTO {
 		Date:     m.Date.Format("2006-01-02"),
 		Time:     m.Time.Format("15:04"),
 		Reason:   m.Reason,
+		Status:   m.Status,
 	}
 }
 
@@ -99,12 +102,19 @@ func (m *MakeupDTO) ToMakeup() *Makeup {
 		return nil
 	}
 
+	// Set default status if empty
+	status := m.Status
+	if status == "" {
+		status = "pending"
+	}
+
 	return &Makeup{
 		MakeupID: m.MakeupID,
 		UserID:   m.UserID,
 		Date:     date,
 		Time:     startTime,
 		Reason:   m.Reason,
+		Status:   status,
 	}
 }
 

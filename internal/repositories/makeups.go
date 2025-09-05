@@ -28,7 +28,7 @@ func NewMakeupRepository(db *sql.DB) MakeupRepository {
 
 func (r *makeupRepository) GetAllMakeups() ([]*models.Makeup, error) {
 	query := `
-		SELECT user_id, makeup_date, start_time, reason
+		SELECT user_id, makeup_date, start_time, reason, status
 		FROM makeups
 		ORDER BY makeup_date, start_time
 	`
@@ -41,7 +41,7 @@ func (r *makeupRepository) GetAllMakeups() ([]*models.Makeup, error) {
 	makeups := make([]*models.Makeup, 0)
 	for rows.Next() {
 		var makeup models.Makeup
-		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason)
+		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason, &makeup.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -52,7 +52,7 @@ func (r *makeupRepository) GetAllMakeups() ([]*models.Makeup, error) {
 
 func (r *makeupRepository) GetMakeupsByDate(date string) ([]*models.Makeup, error) {
 	query := `
-		SELECT user_id, makeup_date, start_time, reason
+		SELECT user_id, makeup_date, start_time, reason, status
 		FROM makeups
 		WHERE makeup_date = $1
 	`
@@ -65,7 +65,7 @@ func (r *makeupRepository) GetMakeupsByDate(date string) ([]*models.Makeup, erro
 	makeups := make([]*models.Makeup, 0)
 	for rows.Next() {
 		var makeup models.Makeup
-		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason)
+		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason, &makeup.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -76,7 +76,7 @@ func (r *makeupRepository) GetMakeupsByDate(date string) ([]*models.Makeup, erro
 
 func (r *makeupRepository) GetMakeupsByMonth(yearMonth string) ([]*models.Makeup, error) {
 	query := `
-		SELECT user_id, makeup_date, start_time, reason
+		SELECT user_id, makeup_date, start_time, reason, status
 		FROM makeups
 		WHERE makeup_date >= $1::date AND makeup_date < ($1::date + INTERVAL '1 month')
 		ORDER BY makeup_date, start_time
@@ -92,7 +92,7 @@ func (r *makeupRepository) GetMakeupsByMonth(yearMonth string) ([]*models.Makeup
 	makeups := make([]*models.Makeup, 0)
 	for rows.Next() {
 		var makeup models.Makeup
-		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason)
+		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason, &makeup.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +103,7 @@ func (r *makeupRepository) GetMakeupsByMonth(yearMonth string) ([]*models.Makeup
 
 func (r *makeupRepository) GetMakeupsByUser(userID string) ([]*models.Makeup, error) {
 	query := `
-		SELECT user_id, makeup_date, start_time, reason
+		SELECT user_id, makeup_date, start_time, reason, status
 		FROM makeups
 		WHERE user_id = $1
 		ORDER BY makeup_date, start_time
@@ -117,7 +117,7 @@ func (r *makeupRepository) GetMakeupsByUser(userID string) ([]*models.Makeup, er
 	makeups := make([]*models.Makeup, 0)
 	for rows.Next() {
 		var makeup models.Makeup
-		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason)
+		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason, &makeup.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +128,7 @@ func (r *makeupRepository) GetMakeupsByUser(userID string) ([]*models.Makeup, er
 
 func (r *makeupRepository) GetMakeupsByUserAndDate(userID, date string) ([]*models.Makeup, error) {
 	query := `
-		SELECT user_id, makeup_date, start_time, reason
+		SELECT user_id, makeup_date, start_time, reason, status
 		FROM makeups
 		WHERE user_id = $1 AND makeup_date = $2
 		ORDER BY start_time
@@ -142,7 +142,7 @@ func (r *makeupRepository) GetMakeupsByUserAndDate(userID, date string) ([]*mode
 	makeups := make([]*models.Makeup, 0)
 	for rows.Next() {
 		var makeup models.Makeup
-		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason)
+		err := rows.Scan(&makeup.UserID, &makeup.Date, &makeup.Time, &makeup.Reason, &makeup.Status)
 		if err != nil {
 			return nil, err
 		}
@@ -155,11 +155,11 @@ func (r *makeupRepository) GetMakeupsByUserAndDate(userID, date string) ([]*mode
 
 func (r *makeupRepository) CreateMakeup(makeup *models.Makeup) error {
 	query := `
-		INSERT INTO makeups (user_id, makeup_date, start_time, reason)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO makeups (user_id, makeup_date, start_time, reason, status)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING makeup_id
 	`
-	err := r.db.QueryRow(query, makeup.UserID, makeup.Date, makeup.Time, makeup.Reason).Scan(&makeup.MakeupID)
+	err := r.db.QueryRow(query, makeup.UserID, makeup.Date, makeup.Time, makeup.Reason, makeup.Status).Scan(&makeup.MakeupID)
 	if err != nil {
 		return err
 	}
@@ -169,10 +169,10 @@ func (r *makeupRepository) CreateMakeup(makeup *models.Makeup) error {
 func (r *makeupRepository) UpdateMakeup(userID, date, time string, makeup *models.Makeup) error {
 	query := `
 		UPDATE makeups
-		SET user_id = $1, makeup_date = $2, start_time = $3, reason = $4
-		WHERE user_id = $5 AND makeup_date = $6 AND start_time = $7
+		SET user_id = $1, makeup_date = $2, start_time = $3, reason = $4, status = $5
+		WHERE user_id = $6 AND makeup_date = $7 AND start_time = $8
 	`
-	result, err := r.db.Exec(query, makeup.UserID, makeup.Date, makeup.Time, makeup.Reason, userID, date, time)
+	result, err := r.db.Exec(query, makeup.UserID, makeup.Date, makeup.Time, makeup.Reason, makeup.Status, userID, date, time)
 	if err != nil {
 		return err
 	}
