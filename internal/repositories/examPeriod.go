@@ -23,7 +23,7 @@ func NewExamPeriodRepository(db *sql.DB) ExamPeriodRepository {
 
 func (r *examPeriodRepository) GetAllExamPeriods() ([]*models.ExamPeriod, error) {
 	query := `
-		SELECT exam_period_id, class_id, name, description, start_date, end_date
+		SELECT exam_period_id, class_id, name, description, start_date, end_date, english_date
 		FROM exam_periods
 	`
 	rows, err := r.db.Query(query)
@@ -34,7 +34,15 @@ func (r *examPeriodRepository) GetAllExamPeriods() ([]*models.ExamPeriod, error)
 	examPeriods := make([]*models.ExamPeriod, 0)
 	for rows.Next() {
 		var examPeriod models.ExamPeriod
-		err := rows.Scan(&examPeriod.ExamPeriodID, &examPeriod.ClassID, &examPeriod.Name, &examPeriod.Description, &examPeriod.StartDate, &examPeriod.EndDate)
+		err := rows.Scan(
+			&examPeriod.ExamPeriodID,
+			&examPeriod.ClassID,
+			&examPeriod.Name,
+			&examPeriod.Description,
+			&examPeriod.StartDate,
+			&examPeriod.EndDate,
+			&examPeriod.EnglishDate,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -45,7 +53,7 @@ func (r *examPeriodRepository) GetAllExamPeriods() ([]*models.ExamPeriod, error)
 
 func (r *examPeriodRepository) GetExamPeriodByClassID(classID int64) ([]*models.ExamPeriod, error) {
 	query := `
-		SELECT exam_period_id, class_id, name, description, start_date, end_date
+		SELECT exam_period_id, class_id, name, description, start_date, end_date, english_date
 		FROM exam_periods
 		WHERE class_id = $1
 	`
@@ -58,7 +66,15 @@ func (r *examPeriodRepository) GetExamPeriodByClassID(classID int64) ([]*models.
 	examPeriods := make([]*models.ExamPeriod, 0)
 	for rows.Next() {
 		var examPeriod models.ExamPeriod
-		err := rows.Scan(&examPeriod.ExamPeriodID, &examPeriod.ClassID, &examPeriod.Name, &examPeriod.Description, &examPeriod.StartDate, &examPeriod.EndDate)
+		err := rows.Scan(
+			&examPeriod.ExamPeriodID,
+			&examPeriod.ClassID,
+			&examPeriod.Name,
+			&examPeriod.Description,
+			&examPeriod.StartDate,
+			&examPeriod.EndDate,
+			&examPeriod.EnglishDate,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -69,10 +85,10 @@ func (r *examPeriodRepository) GetExamPeriodByClassID(classID int64) ([]*models.
 
 func (r *examPeriodRepository) CreateExamPeriod(examPeriod *models.ExamPeriod) error {
 	query := `
-		INSERT INTO exam_periods (class_id, name, description, start_date, end_date)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO exam_periods (class_id, name, description, start_date, end_date, english_date)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
-	_, err := r.db.Exec(query, examPeriod.ClassID, examPeriod.Name, examPeriod.Description, examPeriod.StartDate, examPeriod.EndDate)
+	_, err := r.db.Exec(query, examPeriod.ClassID, examPeriod.Name, examPeriod.Description, examPeriod.StartDate, examPeriod.EndDate, examPeriod.EnglishDate)
 	if err != nil {
 		return err
 	}
@@ -82,10 +98,10 @@ func (r *examPeriodRepository) CreateExamPeriod(examPeriod *models.ExamPeriod) e
 func (r *examPeriodRepository) UpdateExamPeriod(examPeriod *models.ExamPeriod) error {
 	query := `
 		UPDATE exam_periods
-		SET name = $1, description = $2, start_date = $3, end_date = $4
-		WHERE exam_period_id = $5
+		SET name = $1, description = $2, start_date = $3, end_date = $4, english_date = $5
+		WHERE exam_period_id = $6
 	`
-	_, err := r.db.Exec(query, examPeriod.Name, examPeriod.Description, examPeriod.StartDate, examPeriod.EndDate, examPeriod.ExamPeriodID)
+	_, err := r.db.Exec(query, examPeriod.Name, examPeriod.Description, examPeriod.StartDate, examPeriod.EndDate, examPeriod.EnglishDate, examPeriod.ExamPeriodID)
 	if err != nil {
 		return err
 	}

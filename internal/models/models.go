@@ -40,10 +40,12 @@ func parseDateString(dateStr string) (time.Time, error) {
 		loc = time.UTC
 	}
 
-	date, err := time.Parse("2006-01-02", dateStr)
+	// 날짜 문자열을 명시적으로 로컬 시간대로 파싱
+	date, err := time.ParseInLocation("2006-01-02", dateStr, loc)
 	if err != nil {
 		return time.Time{}, err
 	}
+	// 시간을 00:00:00으로 설정하여 하루의 시작으로 처리
 	return time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc), nil
 }
 
@@ -143,6 +145,7 @@ type ExamPeriod struct {
 	Description  string    `json:"description"`
 	StartDate    time.Time `json:"start_date"`
 	EndDate      time.Time `json:"end_date"`
+	EnglishDate  time.Time `json:"english_date"`
 }
 
 type ExamPeriodDTO struct {
@@ -152,6 +155,7 @@ type ExamPeriodDTO struct {
 	Description  string    `json:"description"`
 	StartDate    string    `json:"start_date"`
 	EndDate      string    `json:"end_date"`
+	EnglishDate  string    `json:"english_date"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -164,6 +168,7 @@ func (e *ExamPeriod) ToExamPeriodDTO() *ExamPeriodDTO {
 		Description:  e.Description,
 		StartDate:    e.StartDate.Format("2006-01-02"),
 		EndDate:      e.EndDate.Format("2006-01-02"),
+		EnglishDate:  e.EnglishDate.Format("2006-01-02"),
 	}
 }
 
@@ -178,6 +183,11 @@ func (e *ExamPeriodDTO) ToExamPeriod() *ExamPeriod {
 		return nil
 	}
 
+	englishDate, err := parseDateString(e.EnglishDate)
+	if err != nil {
+		return nil
+	}
+
 	return &ExamPeriod{
 		ExamPeriodID: e.ExamPeriodID,
 		ClassID:      e.ClassID,
@@ -185,6 +195,7 @@ func (e *ExamPeriodDTO) ToExamPeriod() *ExamPeriod {
 		Description:  e.Description,
 		StartDate:    startDate,
 		EndDate:      endDate,
+		EnglishDate:  englishDate,
 	}
 }
 
