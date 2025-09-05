@@ -28,6 +28,8 @@ go.work.sum
 .env
 .env.dev
 
+# data file
+data/
 
 # Editor/IDE
 # .idea/
