@@ -70,4 +70,12 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		examPeriod.PUT("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.UpdateExamPeriod)
 		examPeriod.DELETE("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.DeleteExamPeriod)
 	}
+	admin := router.Group("/admin")
+	admin.Use(middlewares.AuthMiddleware(c.AuthService))
+	admin.Use(middlewares.AdminAuthMiddleware(c.AuthService, c.UserService))
+	{
+		admin.GET("/memo", c.AdminMemoHandler.GetMemo)
+		admin.POST("/memo", c.AdminMemoHandler.SaveMemo)
+		admin.DELETE("/memo", c.AdminMemoHandler.DeleteMemo)
+	}
 }
