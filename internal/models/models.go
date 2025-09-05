@@ -171,6 +171,11 @@ type ExamPeriodDTO struct {
 }
 
 func (e *ExamPeriod) ToExamPeriodDTO() *ExamPeriodDTO {
+	var englishDateStr string
+	if !e.EnglishDate.IsZero() {
+		englishDateStr = e.EnglishDate.Format("2006-01-02")
+	}
+
 	return &ExamPeriodDTO{
 		ExamPeriodID: e.ExamPeriodID,
 		ClassID:      e.ClassID,
@@ -178,7 +183,7 @@ func (e *ExamPeriod) ToExamPeriodDTO() *ExamPeriodDTO {
 		Description:  e.Description,
 		StartDate:    e.StartDate.Format("2006-01-02"),
 		EndDate:      e.EndDate.Format("2006-01-02"),
-		EnglishDate:  e.EnglishDate.Format("2006-01-02"),
+		EnglishDate:  englishDateStr,
 	}
 }
 
@@ -193,9 +198,13 @@ func (e *ExamPeriodDTO) ToExamPeriod() *ExamPeriod {
 		return nil
 	}
 
-	englishDate, err := parseDateString(e.EnglishDate)
-	if err != nil {
-		return nil
+	var englishDate time.Time
+	if e.EnglishDate != "" {
+		var err error
+		englishDate, err = parseDateString(e.EnglishDate)
+		if err != nil {
+			return nil
+		}
 	}
 
 	return &ExamPeriod{
