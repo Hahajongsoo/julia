@@ -1,0 +1,80 @@
+name: julia-dev
+services:
+  backend-dev:
+    build:
+      context: ./julia_back
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./julia_back:/app
+    environment:
+      - GIN_MODE=debug
+    env_file:
+      - ./julia_back/.env.dev
+    restart: unless-stopped
+    networks:
+      - julia-dev-network
+    depends_on:
+      - postgres-dev
+
+  frontend-dev:
+    build:
+      context: ./julia_front
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./julia_front:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=/api
+      - VITE_APP_TITLE=Julia (Dev)
+      - VITE_APP_VERSION=1.0.0
+      - VITE_DEBUG_MODE=true
+      - VITE_FILE_PROCESSOR_URL=http://localhost:5001
+    env_file:
+      - ./julia_front/.env.dev
+    command: npm run dev
+    networks:
+      - julia-dev-network
+    depends_on:
+      - backend-dev
+
+  postgres-dev:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "1234"
+      TZ: "Asia/Seoul"
+    volumes:
+      - db-data-dev:/var/lib/postgresql/data
+    networks:
+      - julia-dev-network
+    restart: unless-stopped
+
+  file-processor-dev:
+    build:
+      context: ./file_processor
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./file_processor:/app
+    environment:
+      - TZ=Asia/Seoul
+      - WINDOWS_SERVER_URL=http://192.168.45.102:5000
+      - FLASK_ENV=development
+    networks:
+      - julia-dev-network
+    restart: unless-stopped
+
+networks:
+  julia-dev-network:
+    driver: bridge
+
+volumes:
+  db-data-dev:
+    name: db-dev

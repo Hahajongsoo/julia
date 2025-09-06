@@ -1,0 +1,136 @@
+name: julia
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: "1234"
+      TZ: "Asia/Seoul"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - julia-network
+    restart: unless-stopped
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # 백엔드 (Gin)
+  backend:
+    build:
+      context: ./julia_back
+      dockerfile: Dockerfile
+    environment:
+      - GIN_MODE=release
+      - TZ=Asia/Seoul
+    env_file:
+      - ./julia_back/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - julia-network
+    restart: unless-stopped
+    expose:
+      - "8080"
+    healthcheck:
+      # 백엔드에 /health 같은 엔드포인트가 있다고 가정
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+
+  frontend:
+    build:
+      context: ./julia_front
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - TZ=Asia/Seoul
+      - VITE_API_BASE_URL=/api
+      - VITE_APP_TITLE=Julia
+      - VITE_APP_VERSION=1.0.0
+      - VITE_DEBUG_MODE=false
+      - VITE_FILE_PROCESSOR_URL=/file-processor
+    env_file:
+      - ./julia_front/.env
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - julia-network
+    restart: unless-stopped
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+
+  file-processor:
+    build:
+      context: ./file_processor
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Asia/Seoul
+      - WINDOWS_SERVER_URL=http://192.168.45.102:5000
+      - FLASK_ENV=production
+    networks:
+      - julia-network
+    restart: unless-stopped
+    expose:
+      - "5000"
+    ports:
+      - "5000:5001"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:1.25
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./letsencrypt:/etc/letsencrypt:ro
+      - /var/log/nginx:/var/log/nginx
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - julia-network
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - julia-network
+    command: ["echo", "Certbot initialized"]
+
+
+networks:
+  julia-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    external: true
+    name: 94d218c76603151366cc7c91c857ce664cf06917481aaf59b5bbcb4d97d87be8
