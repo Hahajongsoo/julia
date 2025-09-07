@@ -92,10 +92,11 @@ func (r *assignmentRepository) GetAssignmentsByMakeupID(makeupID int64) ([]*mode
 
 func (r *assignmentRepository) GetAssignmentWithClassID() ([]*models.AssignmentRow, error) {
 	query := `
-		SELECT c.class_id, c.class_name, a.assignment_id, a.user_id, a.content, a.status, a.created_at
+		SELECT COALESCE(c.class_id, -1) as class_id, COALESCE(c.class_name, '미지정') as class_name, a.assignment_id, a.user_id, a.content, a.status, a.created_at
 		FROM assignments a
 		JOIN users u ON a.user_id = u.id
-		JOIN classes c ON u.class_id = c.class_id
+		LEFT JOIN classes c ON u.class_id = c.class_id
+		WHERE a.status = 'pending'
 		ORDER BY c.class_id, a.user_id, a.created_at DESC
 	`
 	rows, err := r.db.Query(query)
@@ -106,7 +107,7 @@ func (r *assignmentRepository) GetAssignmentWithClassID() ([]*models.AssignmentR
 	assignments := make([]*models.AssignmentRow, 0)
 	for rows.Next() {
 		var assignment models.AssignmentRow
-		err := rows.Scan(&assignment.ClassID, &assignment.AssignmentID, &assignment.UserID, &assignment.Content, &assignment.Status, &assignment.CreatedAt)
+		err := rows.Scan(&assignment.ClassID, &assignment.ClassName, &assignment.AssignmentID, &assignment.UserID, &assignment.Content, &assignment.Status, &assignment.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -116,16 +117,29 @@ func (r *assignmentRepository) GetAssignmentWithClassID() ([]*models.AssignmentR
 }
 
 func (r *assignmentRepository) UpsertAssignment(assignment *models.Assignment) error {
-	query := `
-		INSERT INTO assignments (user_id, content, status)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (assignment_id) DO UPDATE SET
-			content = EXCLUDED.content,
-			status = EXCLUDED.status
-	`
-	_, err := r.db.Exec(query, assignment.UserID, assignment.Content, assignment.Status)
-	if err != nil {
-		return err
+	if assignment.AssignmentID == 0 {
+		query := `
+			INSERT INTO assignments (user_id, makeup_id, content, status)
+			VALUES ($1, $2, $3, $4)
+			RETURNING assignment_id, created_at, updated_at
+		`
+		err := r.db.QueryRow(query, assignment.UserID, assignment.MakeupID, assignment.Content, assignment.Status).
+			Scan(&assignment.AssignmentID, &assignment.CreatedAt, &assignment.UpdatedAt)
+		if err != nil {
+			return err
+		}
+	} else {
+		query := `
+			UPDATE assignments
+			SET user_id = $2, makeup_id = $3, content = $4, status = $5, updated_at = now()
+			WHERE assignment_id = $1
+			RETURNING updated_at
+		`
+		err := r.db.QueryRow(query, assignment.AssignmentID, assignment.UserID, assignment.MakeupID, assignment.Content, assignment.Status).
+			Scan(&assignment.UpdatedAt)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

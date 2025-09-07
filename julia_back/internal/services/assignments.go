@@ -52,25 +52,24 @@ func groupByClassAndUser(rows []*models.AssignmentRow) *models.ClassAssignments 
 	)
 	for _, row := range rows {
 		if row.ClassID != curClassID {
+			classIdx++
+			curClassID = row.ClassID
 			result.Classes = append(result.Classes, models.ClassBlock{
 				ClassID:   row.ClassID,
 				ClassName: row.ClassName,
 				Students:  []models.StudentAssignment{},
 			})
-			classIdx++
-			curClassID = row.ClassID
-
+			
 			userIdx = -1
 			curUserID = ""
 		}
 		if row.UserID != curUserID {
+			userIdx++
+			curUserID = row.UserID
 			result.Classes[classIdx].Students = append(result.Classes[classIdx].Students, models.StudentAssignment{
 				UserID:      row.UserID,
 				Assignments: []models.Assignment{},
 			})
-			userIdx++
-			curUserID = row.UserID
-
 			result.Classes[classIdx].Students[userIdx].Assignments = append(
 				result.Classes[classIdx].Students[userIdx].Assignments,
 				toAssignment(row))

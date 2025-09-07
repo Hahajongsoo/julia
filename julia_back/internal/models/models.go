@@ -230,6 +230,7 @@ type Assignment struct {
 	Content      string    `json:"content"`
 	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type AssignmentRow struct {
@@ -240,6 +241,7 @@ type AssignmentRow struct {
 	Content      string    `json:"content"`
 	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type ClassAssignments struct {
