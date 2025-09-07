@@ -59,7 +59,7 @@ func groupByClassAndUser(rows []*models.AssignmentRow) *models.ClassAssignments 
 				ClassName: row.ClassName,
 				Students:  []models.StudentAssignment{},
 			})
-			
+
 			userIdx = -1
 			curUserID = ""
 		}
@@ -84,7 +84,7 @@ func groupByClassAndUser(rows []*models.AssignmentRow) *models.ClassAssignments 
 
 func toAssignment(row *models.AssignmentRow) models.Assignment {
 	return models.Assignment{
-		AssignmentID: row.AssignmentID,
+		AssignmentID: &row.AssignmentID,
 		UserID:       row.UserID,
 		Content:      row.Content,
 		Status:       row.Status,

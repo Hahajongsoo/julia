@@ -224,9 +224,9 @@ type AdminMemo struct {
 }
 
 type Assignment struct {
-	AssignmentID int64     `json:"assignment_id"`
+	AssignmentID *int64    `json:"assignment_id,omitempty"`
 	UserID       string    `json:"user_id"`
-	MakeupID     int64     `json:"makeup_id"`
+	MakeupID     *int64    `json:"makeup_id,omitempty"`
 	Content      string    `json:"content"`
 	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`

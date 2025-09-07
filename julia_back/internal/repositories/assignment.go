@@ -117,7 +117,7 @@ func (r *assignmentRepository) GetAssignmentWithClassID() ([]*models.AssignmentR
 }
 
 func (r *assignmentRepository) UpsertAssignment(assignment *models.Assignment) error {
-	if assignment.AssignmentID == 0 {
+	if assignment.AssignmentID == nil {
 		query := `
 			INSERT INTO assignments (user_id, makeup_id, content, status)
 			VALUES ($1, $2, $3, $4)
