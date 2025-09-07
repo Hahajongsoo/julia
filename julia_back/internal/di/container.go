@@ -21,6 +21,7 @@ type Container struct {
 	ClassHandler        *handlers.ClassHandler
 	ExamPeriodHandler   *handlers.ExamPeriodHandler
 	AdminMemoHandler    *handlers.AdminMemoHandler
+	AssignmentHandler   *handlers.AssignmentHandler
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -65,6 +66,10 @@ func NewContainer(db *sql.DB) *Container {
 
 	loginHdl := handlers.NewLoginHandler(authSvc)
 
+	assignmentRepo := repositories.NewAssignmentRepository(db)
+	assignmentSvc := services.NewAssignmentService(assignmentRepo)
+	assignmentHdl := handlers.NewAssignmentHandler(assignmentSvc)
+
 	return &Container{
 		UserHandler:       userHdl,
 		LoginHandler:      loginHdl,
@@ -75,5 +80,6 @@ func NewContainer(db *sql.DB) *Container {
 		ClassHandler:      classHdl,
 		ExamPeriodHandler: examPeriodHdl,
 		AdminMemoHandler:  adminMemoHdl,
+		AssignmentHandler: assignmentHdl,
 	}
 }

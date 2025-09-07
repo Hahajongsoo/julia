@@ -222,3 +222,36 @@ type AdminMemo struct {
 	Content   string    `json:"content"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type Assignment struct {
+	AssignmentID int64     `json:"assignment_id"`
+	UserID       string    `json:"user_id"`
+	Content      string    `json:"content"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type AssignmentRow struct {
+	ClassID      int64     `json:"class_id"`
+	ClassName    string    `json:"class_name"`
+	AssignmentID int64     `json:"assignment_id"`
+	UserID       string    `json:"user_id"`
+	Content      string    `json:"content"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type ClassAssignments struct {
+	Classes []ClassBlock `json:"classes"`
+}
+
+type ClassBlock struct {
+	ClassID   int64               `json:"class_id"`
+	ClassName string              `json:"class_name"`
+	Students  []StudentAssignment `json:"students"`
+}
+
+type StudentAssignment struct {
+	UserID      string       `json:"user_id"`
+	Assignments []Assignment `json:"assignments"`
+}
