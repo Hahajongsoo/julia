@@ -84,6 +84,7 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	{
 		assignment.GET("", c.AssignmentHandler.GetAllAssignments)
 		assignment.GET("/user/:userID", c.AssignmentHandler.GetAssignmentsByUserID)
+		assignment.GET("/makeup/:makeupID", c.AssignmentHandler.GetAssignmentsByMakeupID)
 		assignment.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.AssignmentHandler.UpsertAssignment)
 		assignment.DELETE("/:assignmentID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.AssignmentHandler.DeleteAssignment)
 	}

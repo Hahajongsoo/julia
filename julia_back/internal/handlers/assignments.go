@@ -36,6 +36,21 @@ func (h *AssignmentHandler) GetAssignmentsByUserID(c *gin.Context) {
 	c.JSON(http.StatusOK, assignments)
 }
 
+func (h *AssignmentHandler) GetAssignmentsByMakeupID(c *gin.Context) {
+	makeupID := c.Param("makeupID")
+	makeupIDInt, err := strconv.ParseInt(makeupID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	assignments, err := h.assignmentService.GetAssignmentsByMakeupID(makeupIDInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, assignments)
+}
+
 func (h *AssignmentHandler) GetAssignmentWithClassID(c *gin.Context) {
 	assignments, err := h.assignmentService.GetAssignmentWithClassID()
 	if err != nil {

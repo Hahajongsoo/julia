@@ -8,6 +8,7 @@ import (
 type AssignmentService interface {
 	GetAllAssignments() ([]*models.Assignment, error)
 	GetAssignmentsByUserID(userID string) ([]*models.Assignment, error)
+	GetAssignmentsByMakeupID(makeupID int64) ([]*models.Assignment, error)
 	GetAssignmentWithClassID() (*models.ClassAssignments, error)
 	UpsertAssignment(assignment *models.Assignment) error
 	DeleteAssignment(assignmentID int64) error
@@ -27,6 +28,10 @@ func (s *assignmentService) GetAllAssignments() ([]*models.Assignment, error) {
 
 func (s *assignmentService) GetAssignmentsByUserID(userID string) ([]*models.Assignment, error) {
 	return s.assignmentRepo.GetAssignmentsByUserID(userID)
+}
+
+func (s *assignmentService) GetAssignmentsByMakeupID(makeupID int64) ([]*models.Assignment, error) {
+	return s.assignmentRepo.GetAssignmentsByMakeupID(makeupID)
 }
 
 func (s *assignmentService) GetAssignmentWithClassID() (*models.ClassAssignments, error) {

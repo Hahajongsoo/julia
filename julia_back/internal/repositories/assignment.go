@@ -8,6 +8,7 @@ import (
 type AssignmentRepository interface {
 	GetAllAssignments() ([]*models.Assignment, error)
 	GetAssignmentsByUserID(userID string) ([]*models.Assignment, error)
+	GetAssignmentsByMakeupID(makeupID int64) ([]*models.Assignment, error)
 	GetAssignmentWithClassID() ([]*models.AssignmentRow, error)
 	UpsertAssignment(assignment *models.Assignment) error
 	DeleteAssignment(assignmentID int64) error
@@ -45,7 +46,7 @@ func (r *assignmentRepository) GetAllAssignments() ([]*models.Assignment, error)
 
 func (r *assignmentRepository) GetAssignmentsByUserID(userID string) ([]*models.Assignment, error) {
 	query := `
-		SELECT assignment_id, user_id, content, status
+		SELECT assignment_id, user_id, content, status, created_at
 		FROM assignments
 		WHERE user_id = $1
 	`
@@ -57,7 +58,30 @@ func (r *assignmentRepository) GetAssignmentsByUserID(userID string) ([]*models.
 	assignments := make([]*models.Assignment, 0)
 	for rows.Next() {
 		var assignment models.Assignment
-		err := rows.Scan(&assignment.AssignmentID, &assignment.UserID, &assignment.Content, &assignment.Status)
+		err := rows.Scan(&assignment.AssignmentID, &assignment.UserID, &assignment.Content, &assignment.Status, &assignment.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		assignments = append(assignments, &assignment)
+	}
+	return assignments, nil
+}
+
+func (r *assignmentRepository) GetAssignmentsByMakeupID(makeupID int64) ([]*models.Assignment, error) {
+	query := `
+		SELECT assignment_id, user_id, content, status, created_at
+		FROM assignments
+		WHERE makeup_id = $1
+	`
+	rows, err := r.db.Query(query, makeupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	assignments := make([]*models.Assignment, 0)
+	for rows.Next() {
+		var assignment models.Assignment
+		err := rows.Scan(&assignment.AssignmentID, &assignment.UserID, &assignment.Content, &assignment.Status, &assignment.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
