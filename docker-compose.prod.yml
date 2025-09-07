@@ -133,4 +133,4 @@ networks:
 volumes:
   db-data:
     external: true
-    name: 94d218c76603151366cc7c91c857ce664cf06917481aaf59b5bbcb4d97d87be8
+    name: julia-db-prod
