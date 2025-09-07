@@ -30,6 +30,7 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		classes.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.CreateClass)
 		classes.PUT("/:classID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.UpdateClass)
 		classes.DELETE("/:classID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ClassHandler.DeleteClass)
+		classes.GET("/assignments", c.AssignmentHandler.GetAssignmentWithClassID)
 	}
 	auth := router.Group("/auth")
 	{
@@ -77,5 +78,14 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		admin.GET("/memo", c.AdminMemoHandler.GetMemo)
 		admin.POST("/memo", c.AdminMemoHandler.SaveMemo)
 		admin.DELETE("/memo", c.AdminMemoHandler.DeleteMemo)
+	}
+	assignment := router.Group("/assignments")
+	assignment.Use(middlewares.AuthMiddleware(c.AuthService))
+	{
+		assignment.GET("", c.AssignmentHandler.GetAllAssignments)
+		assignment.GET("/user/:userID", c.AssignmentHandler.GetAssignmentsByUserID)
+		assignment.GET("/makeup/:makeupID", c.AssignmentHandler.GetAssignmentsByMakeupID)
+		assignment.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.AssignmentHandler.UpsertAssignment)
+		assignment.DELETE("/:assignmentID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.AssignmentHandler.DeleteAssignment)
 	}
 }
