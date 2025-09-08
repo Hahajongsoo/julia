@@ -47,7 +47,6 @@
 	let showAssignmentForm = false;
 	let assignmentFormData = {
 		content: '',
-		due_date: '',
 		status: 'pending'
 	};
 	let selectedMakeupForAssignment = null;
@@ -102,7 +101,6 @@
 		};
 		assignmentFormData = {
 			content: '',
-			due_date: '',
 			status: 'pending'
 		};
 	}
@@ -197,7 +195,6 @@
 		showAssignmentForm = true;
 		assignmentFormData = {
 			content: `${makeup.makeup_date} 보강 일정에 대한 과제입니다.\n`,
-			due_date: makeup.makeup_date,
 			status: 'pending'
 		};
 	}
@@ -208,7 +205,6 @@
 		selectedMakeupForAssignment = null;
 		assignmentFormData = {
 			content: '',
-			due_date: '',
 			status: 'pending'
 		};
 	}
@@ -326,7 +322,6 @@
 			const assignmentData = {
 				user_id: selectedMakeupForAssignment.user_id,
 				content: assignmentFormData.content,
-				due_date: assignmentFormData.due_date,
 				status: assignmentFormData.status
 			};
 
@@ -561,17 +556,6 @@
 					</div>
 
 					<div class="form-group">
-						<label for="assignment-due-date">마감일</label>
-						<input
-							id="assignment-due-date"
-							type="date"
-							bind:value={assignmentFormData.due_date}
-							required
-							class="form-input"
-						/>
-					</div>
-
-					<div class="form-group">
 						<label for="assignment-status">상태</label>
 						<select
 							id="assignment-status"
@@ -580,7 +564,6 @@
 							class="form-input"
 						>
 							<option value="pending">대기중</option>
-							<option value="in_progress">진행중</option>
 							<option value="completed">완료</option>
 						</select>
 					</div>
