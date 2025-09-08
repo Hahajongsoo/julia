@@ -48,7 +48,7 @@ func (r *assignmentRepository) GetAssignmentsByUserID(userID string) ([]*models.
 	query := `
 		SELECT assignment_id, user_id, content, status, created_at
 		FROM assignments
-		WHERE user_id = $1
+		WHERE user_id = $1 AND status = 'pending'
 	`
 	rows, err := r.db.Query(query, userID)
 	if err != nil {

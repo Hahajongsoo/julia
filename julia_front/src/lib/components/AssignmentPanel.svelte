@@ -448,15 +448,30 @@
 													<div class="assignment-student-list">
 														{#each student.assignments as assignment (assignment.assignment_id)}
 															<div class="assignment-item">
-																<label class="assignment-checkbox-label">
-																	<input 
-																		type="checkbox" 
-																		class="assignment-checkbox"
-																		checked={assignment.status === 'completed'}
-																		on:change={(e) => updateAssignmentStatus(assignment, e.target.checked)}
-																	/>
-																	<span class="assignment-checkmark"></span>
-																	<div class="assignment-content-text" on:click={() => openEditAssignmentForm(assignment)}>
+																{#if userRole === 'admin'}
+																	<label class="assignment-checkbox-label">
+																		<input 
+																			type="checkbox" 
+																			class="assignment-checkbox"
+																			checked={assignment.status === 'completed'}
+																			on:change={(e) => updateAssignmentStatus(assignment, e.target.checked)}
+																		/>
+																		<span class="assignment-checkmark"></span>
+																		<div class="assignment-content-text" on:click={() => openEditAssignmentForm(assignment)}>
+																			<div class="assignment-main">
+																				<span class="assignment-text">{assignment.content}</span>
+																			</div>
+																			<div class="assignment-date">
+																				{new Date(assignment.created_at).toLocaleDateString('ko-KR', {
+																					month: 'short',
+																					day: 'numeric'
+																				})}
+																			</div>
+																		</div>
+																	</label>
+																{:else}
+																	<!-- 학생용: 체크박스 없이 과제 내용만 표시 -->
+																	<div class="assignment-student-content">
 																		<div class="assignment-main">
 																			<span class="assignment-text">{assignment.content}</span>
 																		</div>
@@ -467,7 +482,7 @@
 																			})}
 																		</div>
 																	</div>
-																</label>
+																{/if}
 															</div>
 														{/each}
 													</div>
@@ -1006,6 +1021,15 @@
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+
+	/* 학생용 과제 내용 스타일 */
+	.assignment-student-content {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 16px;
+		cursor: default;
 	}
 
 	/* 모바일 대응 */
