@@ -47,7 +47,11 @@ export async function loadExamPeriods(fetchWithAuth, API_ENDPOINTS) {
 export function filterExamPeriodsForDate(examPeriods, targetDate) {
 	if (!examPeriods || !targetDate) return [];
 	
-	const targetDateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+	// UTC 변환 대신 로컬 날짜 사용 (타임존 차이로 인한 하루 차이 방지)
+	const year = targetDate.getFullYear();
+	const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+	const day = String(targetDate.getDate()).padStart(2, '0');
+	const targetDateStr = `${year}-${month}-${day}`; // YYYY-MM-DD 형식
 	
 	return examPeriods.filter((ep) => {
 		// 시험 기간의 시작일과 종료일을 YYYY-MM-DD 형식으로 비교
@@ -63,6 +67,11 @@ export function filterExamPeriodsForDate(examPeriods, targetDate) {
 export function isEnglishExam(examPeriod, targetDate) {
 	if (!examPeriod.english_date || !targetDate) return false;
 	
-	const targetDateStr = targetDate.toISOString().split('T')[0];
+	// UTC 변환 대신 로컬 날짜 사용 (타임존 차이로 인한 하루 차이 방지)
+	const year = targetDate.getFullYear();
+	const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+	const day = String(targetDate.getDate()).padStart(2, '0');
+	const targetDateStr = `${year}-${month}-${day}`;
+	
 	return targetDateStr === examPeriod.english_date;
 }
