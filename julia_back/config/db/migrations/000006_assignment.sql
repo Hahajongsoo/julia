@@ -17,3 +17,9 @@ CREATE TABLE assignments (
         REFERENCES makeups(makeup_id)
         ON DELETE CASCADE
 );
+
+ALTER TABLE assignments
+  ALTER COLUMN created_at TYPE timestamptz
+  USING created_at AT TIME ZONE 'Asia/Seoul',
+  ALTER COLUMN updated_at TYPE timestamptz
+  USING updated_at AT TIME ZONE 'Asia/Seoul';
