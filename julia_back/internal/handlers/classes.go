@@ -41,6 +41,25 @@ func (h *ClassHandler) GetClassByID(c *gin.Context) {
 	c.JSON(http.StatusOK, class)
 }
 
+func (h *ClassHandler) GetUsersByClassID(c *gin.Context) {
+	classID := c.Param("classID")
+	classIDInt, err := strconv.ParseInt(classID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	users, err := h.ClassService.GetUsersByClassID(classIDInt)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	responseUsers := make([]*models.ResponseUser, len(users))
+	for i, user := range users {
+		responseUsers[i] = user.ToResponseUser()
+	}
+	c.JSON(http.StatusOK, responseUsers)
+}
+
 func (h *ClassHandler) CreateClass(c *gin.Context) {
 	var class *models.Class
 	if err := c.ShouldBindJSON(&class); err != nil {

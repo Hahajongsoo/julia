@@ -10,6 +10,7 @@ import (
 type UserRepository interface {
 	GetAllUsers() ([]*models.User, error)
 	GetUserByID(id string) (*models.User, error)
+	GetUsersByClassID(classID int64) ([]*models.User, error)
 	CreateUser(user *models.User) error
 	UpdateUser(id string, user *models.User) error
 	DeleteUser(id string) error
@@ -59,6 +60,29 @@ func (r *userRepository) GetUserByID(id string) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) GetUsersByClassID(classID int64) ([]*models.User, error) {
+	query := `
+		SELECT id, password, phone, class_id, created_at, role
+		FROM users 
+		WHERE class_id = $1
+	`
+	rows, err := r.db.Query(query, classID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.ID, &user.Password, &user.Phone, &user.ClassID, &user.CreatedAt, &user.Role)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, &user)
+	}
+	return users, nil
 }
 
 func (r *userRepository) CreateUser(user *models.User) error {

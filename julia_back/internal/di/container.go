@@ -40,7 +40,7 @@ func NewContainer(db *sql.DB) *Container {
 	pushHdl := handlers.NewPushHandler(pushSvc)
 
 	classRepo := repositories.NewClassRepository(db)
-	classSvc := services.NewClassService(classRepo)
+	classSvc := services.NewClassService(classRepo, userRepo)
 	classHdl := handlers.NewClassHandler(classSvc)
 
 	examPeriodRepo := repositories.NewExamPeriodRepository(db)
