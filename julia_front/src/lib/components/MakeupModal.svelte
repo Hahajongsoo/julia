@@ -31,6 +31,11 @@
 	};
 	let isCreating = false;
 
+	// 반 및 학생 관련 상태
+	let classes = [];
+	let students = [];
+	let selectedClassId = '';
+
 	// 보강 수정 관련 상태
 	let showEditForm = false;
 	let editFormData = {
@@ -105,6 +110,48 @@
 		};
 	}
 
+	// 반 목록 가져오기
+	async function loadClasses() {
+		try {
+			const res = await fetchWithAuth(API_ENDPOINTS.CLASSES);
+			if (res.ok) {
+				classes = await res.json();
+			} else {
+				console.error('반 목록 로드 실패');
+			}
+		} catch (e) {
+			console.error('반 목록 로드 오류:', e);
+		}
+	}
+
+	// 선택된 반의 학생 목록 가져오기
+	async function loadStudentsByClass(classId) {
+		if (!classId) {
+			students = [];
+			return;
+		}
+		
+		try {
+			const res = await fetchWithAuth(`${API_ENDPOINTS.CLASSES}/${classId}/users`);
+			if (res.ok) {
+				students = await res.json();
+			} else {
+				console.error('학생 목록 로드 실패');
+				students = [];
+			}
+		} catch (e) {
+			console.error('학생 목록 로드 오류:', e);
+			students = [];
+		}
+	}
+
+	// 반 선택 변경 시 학생 목록 업데이트
+	$: if (selectedClassId) {
+		loadStudentsByClass(selectedClassId);
+		// 반이 변경되면 학생 선택 초기화
+		createFormData.user_id = '';
+	}
+
 	// 보강 생성 폼 열기
 	function openCreateForm() {
 		showCreateForm = true;
@@ -116,6 +163,11 @@
 			reason: '',
 			status: 'pending',
 		};
+		// 반과 학생 목록 초기화
+		selectedClassId = '';
+		students = [];
+		// 반 목록 로드
+		loadClasses();
 	}
 
 	// 보강 생성 폼 닫기
@@ -174,6 +226,11 @@
 			reason: makeup.reason || '',
 			status: makeup.status || 'pending',
 		};
+		// 반과 학생 목록 초기화
+		selectedClassId = '';
+		students = [];
+		// 반 목록 로드
+		loadClasses();
 	}
 
 	// 보강 수정 폼 닫기
@@ -413,15 +470,39 @@
 					</div>
 
 					<div class="form-group">
-						<label for="create-user">학생명</label>
-						<input
-							id="create-user"
-							type="text"
-							bind:value={createFormData.user_id}
-							placeholder="학생 이름을 입력하세요"
+						<label for="create-class">반 선택</label>
+						<select
+							id="create-class"
+							bind:value={selectedClassId}
 							required
 							class="form-input"
-						/>
+						>
+							<option value="">반을 선택하세요</option>
+							{#each classes as classItem}
+								<option value={classItem.class_id}>{classItem.class_name}</option>
+							{/each}
+						</select>
+					</div>
+
+					<div class="form-group">
+						<label for="create-user">학생 선택</label>
+						<select
+							id="create-user"
+							bind:value={createFormData.user_id}
+							required
+							class="form-input"
+							disabled={!selectedClassId}
+						>
+							<option value="">학생을 선택하세요</option>
+							{#each students as student}
+								<option value={student.id}>{student.id}</option>
+							{/each}
+						</select>
+						{#if !selectedClassId}
+							<div class="help-text">먼저 반을 선택해주세요</div>
+						{:else if students.length === 0}
+							<div class="help-text">선택된 반에 학생이 없습니다</div>
+						{/if}
 					</div>
 
 					<div class="form-group">
@@ -492,15 +573,39 @@
 					</div>
 
 					<div class="form-group">
-						<label for="edit-user">학생명</label>
-						<input
-							id="edit-user"
-							type="text"
-							bind:value={editFormData.user_id}
-							placeholder="학생 이름을 입력하세요"
+						<label for="edit-class">반 선택</label>
+						<select
+							id="edit-class"
+							bind:value={selectedClassId}
 							required
 							class="form-input"
-						/>
+						>
+							<option value="">반을 선택하세요</option>
+							{#each classes as classItem}
+								<option value={classItem.class_id}>{classItem.class_name}</option>
+							{/each}
+						</select>
+					</div>
+
+					<div class="form-group">
+						<label for="edit-user">학생 선택</label>
+						<select
+							id="edit-user"
+							bind:value={editFormData.user_id}
+							required
+							class="form-input"
+							disabled={!selectedClassId}
+						>
+							<option value="">학생을 선택하세요</option>
+							{#each students as student}
+								<option value={student.id}>{student.id}</option>
+							{/each}
+						</select>
+						{#if !selectedClassId}
+							<div class="help-text">먼저 반을 선택해주세요</div>
+						{:else if students.length === 0}
+							<div class="help-text">선택된 반에 학생이 없습니다</div>
+						{/if}
 					</div>
 
 					<div class="form-group">
@@ -1231,5 +1336,12 @@
 		outline: none;
 		border-color: var(--brand);
 		box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+	}
+
+	/* 도움말 텍스트 */
+	.help-text {
+		font-size: 12px;
+		color: var(--muted);
+		margin-top: 4px;
 	}
 </style>

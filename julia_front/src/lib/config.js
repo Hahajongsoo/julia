@@ -32,4 +32,6 @@ export const API_ENDPOINTS = {
 	ASSIGNMENTS: `${API_BASE_URL}/assignments`,
 	ASSIGNMENTS_BY_USER: (userId) => `${API_BASE_URL}/assignments/user/${userId}`,
 	CLASS_ASSIGNMENTS: `${API_BASE_URL}/classes/assignments`,
+	// 반 관련 엔드포인트
+	CLASSES: `${API_BASE_URL}/classes`,
 };
