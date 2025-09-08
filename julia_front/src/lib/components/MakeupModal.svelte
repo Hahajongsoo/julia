@@ -43,6 +43,16 @@
 	let selectedMakeup = null;
 	let isEditing = false;
 
+	// 과제 생성 관련 상태
+	let showAssignmentForm = false;
+	let assignmentFormData = {
+		content: '',
+		due_date: '',
+		status: 'pending'
+	};
+	let selectedMakeupForAssignment = null;
+	let isCreatingAssignment = false;
+
 
 	// 날짜 포맷팅 함수
 	function formatDate(date) {
@@ -73,7 +83,9 @@
 		dispatch('close');
 		showCreateForm = false;
 		showEditForm = false;
+		showAssignmentForm = false;
 		selectedMakeup = null;
+		selectedMakeupForAssignment = null;
 		createFormData = {
 			user_id: '',
 			makeup_date: '',
@@ -87,6 +99,11 @@
 			start_time: '',
 			reason: '',
 			status: 'pending',
+		};
+		assignmentFormData = {
+			content: '',
+			due_date: '',
+			status: 'pending'
 		};
 	}
 
@@ -171,6 +188,28 @@
 			start_time: '',
 			reason: '',
 			status: 'pending',
+		};
+	}
+
+	// 과제 생성 폼 열기
+	function openAssignmentForm(makeup) {
+		selectedMakeupForAssignment = makeup;
+		showAssignmentForm = true;
+		assignmentFormData = {
+			content: `${makeup.makeup_date} 보강 일정에 대한 과제입니다.\n`,
+			due_date: makeup.makeup_date,
+			status: 'pending'
+		};
+	}
+
+	// 과제 생성 폼 닫기
+	function closeAssignmentForm() {
+		showAssignmentForm = false;
+		selectedMakeupForAssignment = null;
+		assignmentFormData = {
+			content: '',
+			due_date: '',
+			status: 'pending'
 		};
 	}
 
@@ -275,6 +314,46 @@
 		}
 	}
 
+	// 과제 생성 요청
+	async function createAssignment() {
+		if (!assignmentFormData.content) {
+			alert('내용을 입력해주세요.');
+			return;
+		}
+
+		isCreatingAssignment = true;
+		try {
+			const assignmentData = {
+				user_id: selectedMakeupForAssignment.user_id,
+				content: assignmentFormData.content,
+				due_date: assignmentFormData.due_date,
+				status: assignmentFormData.status
+			};
+
+			const res = await fetchWithAuth(API_ENDPOINTS.ASSIGNMENTS, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(assignmentData),
+			});
+
+			if (res.ok) {
+				alert('과제가 성공적으로 생성되었습니다.');
+				closeAssignmentForm();
+				dispatch('refresh');
+			} else {
+				const errorData = await res.json();
+				alert(`과제 생성 실패: ${errorData.message || '알 수 없는 오류가 발생했습니다.'}`);
+			}
+		} catch (e) {
+			console.error('과제 생성 오류:', e);
+			alert('과제 생성 중 오류가 발생했습니다.');
+		} finally {
+			isCreatingAssignment = false;
+		}
+	}
+
 	// 키보드 이벤트 처리 (ESC로 모달 닫기)
 	function handleKeydown(event) {
 		if (event.key === 'Escape') {
@@ -282,6 +361,8 @@
 				closeCreateForm();
 			} else if (showEditForm) {
 				closeEditForm();
+			} else if (showAssignmentForm) {
+				closeAssignmentForm();
 			} else {
 				closeModal();
 			}
@@ -462,6 +543,63 @@
 					</div>
 				</form>
 			</div>
+		{:else if showAssignmentForm}
+			<!-- 과제 생성 폼 -->
+			<div class="create-form">
+				<h3>새 과제 생성</h3>
+				<form on:submit|preventDefault={createAssignment}>
+					<div class="form-group">
+						<label for="assignment-content">과제 내용</label>
+						<textarea
+							id="assignment-content"
+							bind:value={assignmentFormData.content}
+							placeholder="과제 내용을 입력하세요"
+							required
+							class="form-textarea"
+							rows="6"
+						/>
+					</div>
+
+					<div class="form-group">
+						<label for="assignment-due-date">마감일</label>
+						<input
+							id="assignment-due-date"
+							type="date"
+							bind:value={assignmentFormData.due_date}
+							required
+							class="form-input"
+						/>
+					</div>
+
+					<div class="form-group">
+						<label for="assignment-status">상태</label>
+						<select
+							id="assignment-status"
+							bind:value={assignmentFormData.status}
+							required
+							class="form-input"
+						>
+							<option value="pending">대기중</option>
+							<option value="in_progress">진행중</option>
+							<option value="completed">완료</option>
+						</select>
+					</div>
+
+					<div class="form-actions">
+						<button
+							type="button"
+							class="btn ghost"
+							on:click={closeAssignmentForm}
+							disabled={isCreatingAssignment}
+						>
+							취소
+						</button>
+						<button type="submit" class="btn primary" disabled={isCreatingAssignment}>
+							{isCreatingAssignment ? '생성 중...' : '과제 생성'}
+						</button>
+					</div>
+				</form>
+			</div>
 		{:else}
 			<!-- 기존 보강 일정 목록 -->
 			{#if isModalLoading}
@@ -534,6 +672,48 @@
 												{/each}
 											</select>
 										</div>
+										<button
+											class="btn-icon assignment-btn"
+											on:click={() => openAssignmentForm(s)}
+											title="과제 생성"
+										>
+											<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+												<path
+													d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+													stroke="currentColor"
+													fill="none"
+													stroke-width="2"
+												/>
+												<polyline
+													points="14,2 14,8 20,8"
+													stroke="currentColor"
+													fill="none"
+													stroke-width="2"
+												/>
+												<line
+													x1="16"
+													y1="13"
+													x2="8"
+													y2="13"
+													stroke="currentColor"
+													stroke-width="2"
+												/>
+												<line
+													x1="16"
+													y1="17"
+													x2="8"
+													y2="17"
+													stroke="currentColor"
+													stroke-width="2"
+												/>
+												<polyline
+													points="10,9 9,9 8,9"
+													stroke="currentColor"
+													fill="none"
+													stroke-width="2"
+												/>
+											</svg>
+										</button>
 										<div class="item-actions">
 											<button
 												class="btn-icon edit-btn"
@@ -807,6 +987,14 @@
 
 	.delete-btn:hover {
 		background: color-mix(in srgb, var(--sun) 10%, transparent);
+	}
+
+	.assignment-btn {
+		color: #10b981;
+	}
+
+	.assignment-btn:hover {
+		background: color-mix(in srgb, #10b981 10%, transparent);
 	}
 
 	.btn-icon svg {
