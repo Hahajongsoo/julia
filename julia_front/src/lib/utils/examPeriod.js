@@ -1,5 +1,7 @@
 // 시험 기간 관리 유틸리티 모듈
 
+import { toLocalDateString } from './calendarData.js';
+
 // 시험 기간 색상 팔레트 (보강 색상과 구분되는 색상들)
 export const examPeriodColors = [
 	{ bg: '#fef3c7', border: '#fde68a', text: '#92400e' }, // 노란색
@@ -48,10 +50,7 @@ export function filterExamPeriodsForDate(examPeriods, targetDate) {
 	if (!examPeriods || !targetDate) return [];
 	
 	// UTC 변환 대신 로컬 날짜 사용 (타임존 차이로 인한 하루 차이 방지)
-	const year = targetDate.getFullYear();
-	const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-	const day = String(targetDate.getDate()).padStart(2, '0');
-	const targetDateStr = `${year}-${month}-${day}`; // YYYY-MM-DD 형식
+	const targetDateStr = toLocalDateString(targetDate);
 	
 	return examPeriods.filter((ep) => {
 		// 시험 기간의 시작일과 종료일을 YYYY-MM-DD 형식으로 비교
@@ -68,10 +67,7 @@ export function isEnglishExam(examPeriod, targetDate) {
 	if (!examPeriod.english_date || !targetDate) return false;
 	
 	// UTC 변환 대신 로컬 날짜 사용 (타임존 차이로 인한 하루 차이 방지)
-	const year = targetDate.getFullYear();
-	const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-	const day = String(targetDate.getDate()).padStart(2, '0');
-	const targetDateStr = `${year}-${month}-${day}`;
+	const targetDateStr = toLocalDateString(targetDate);
 	
 	return targetDateStr === examPeriod.english_date;
 }
