@@ -18,6 +18,7 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 	{
 		user.GET("", c.UserHandler.GetAll)
 		user.GET("/:id", c.UserHandler.GetByID)
+		user.GET("/:id/todos", c.UserHandler.GetTodosByUserID)
 		user.POST("", c.UserHandler.Create)
 		user.PUT("/:id", c.UserHandler.Update)
 		user.DELETE("/:id", c.UserHandler.Delete)
@@ -72,13 +73,14 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 		examPeriod.PUT("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.UpdateExamPeriod)
 		examPeriod.DELETE("/:examPeriodID", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.ExamPeriodHandler.DeleteExamPeriod)
 	}
-	admin := router.Group("/admin")
-	admin.Use(middlewares.AuthMiddleware(c.AuthService))
-	admin.Use(middlewares.AdminAuthMiddleware(c.AuthService, c.UserService))
+
+	todos := router.Group("/todos")
+	todos.Use(middlewares.AuthMiddleware(c.AuthService))
 	{
-		admin.GET("/memo", c.AdminMemoHandler.GetMemo)
-		admin.POST("/memo", c.AdminMemoHandler.SaveMemo)
-		admin.DELETE("/memo", c.AdminMemoHandler.DeleteMemo)
+		todos.GET("", c.TodoHandler.GetAllTodos)
+		todos.POST("", c.TodoHandler.CreateTodo)
+		todos.PUT("/:id", c.TodoHandler.UpdateTodo)
+		todos.DELETE("/:id", c.TodoHandler.DeleteTodo)
 	}
 	assignment := router.Group("/assignments")
 	assignment.Use(middlewares.AuthMiddleware(c.AuthService))

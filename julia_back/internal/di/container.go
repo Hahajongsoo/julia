@@ -20,7 +20,7 @@ type Container struct {
 	NotificationService *services.NotificationService
 	ClassHandler        *handlers.ClassHandler
 	ExamPeriodHandler   *handlers.ExamPeriodHandler
-	AdminMemoHandler    *handlers.AdminMemoHandler
+	TodoHandler         *handlers.TodoHandler
 	AssignmentHandler   *handlers.AssignmentHandler
 }
 
@@ -51,9 +51,9 @@ func NewContainer(db *sql.DB) *Container {
 	if dataDir == "" {
 		dataDir = "./data"
 	}
-	adminMemoRepo := repositories.NewAdminMemoRepository(dataDir)
-	adminMemoSvc := services.NewAdminMemoService(adminMemoRepo)
-	adminMemoHdl := handlers.NewAdminMemoHandler(adminMemoSvc)
+	todoRepo := repositories.NewTodoRepository(db)
+	todoSvc := services.NewTodoService(todoRepo)
+	todoHdl := handlers.NewTodoHandler(todoSvc)
 
 	authSvc := services.NewAuthService(userRepo, services.Config{
 		SessionTTL: 30 * time.Minute,
@@ -79,7 +79,7 @@ func NewContainer(db *sql.DB) *Container {
 		PushHandler:       pushHdl,
 		ClassHandler:      classHdl,
 		ExamPeriodHandler: examPeriodHdl,
-		AdminMemoHandler:  adminMemoHdl,
+		TodoHandler:       todoHdl,
 		AssignmentHandler: assignmentHdl,
 	}
 }
