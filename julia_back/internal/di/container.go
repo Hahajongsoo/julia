@@ -26,24 +26,27 @@ type Container struct {
 
 func NewContainer(db *sql.DB) *Container {
 	userRepo := repositories.NewUserRepository(db)
-	userSvc := services.NewUserService(userRepo)
+	makeupRepo := repositories.NewMakeupRepository(db)
+	notificationRepo := repositories.NewNotificationRepository(db)
+	classRepo := repositories.NewClassRepository(db)
+	pushRepo := repositories.NewPushRepository(db)
+	todoRepo := repositories.NewTodoRepository(db)
+	examPeriodRepo := repositories.NewExamPeriodRepository(db)
+	assignmentRepo := repositories.NewAssignmentRepository(db)
+
+	userSvc := services.NewUserService(userRepo, todoRepo)
 	userHdl := handlers.NewUserHandler(userSvc)
 
-	makeupRepo := repositories.NewMakeupRepository(db)
 	makeupSvc := services.NewMakeupService(makeupRepo)
-	notificationRepo := repositories.NewNotificationRepository(db)
 	notificationSvc := services.NewNotificationService(notificationRepo)
 	makeupHdl := handlers.NewMakeupHandler(makeupSvc, notificationSvc)
 
-	pushRepo := repositories.NewPushRepository(db)
 	pushSvc := services.NewPushService(pushRepo)
 	pushHdl := handlers.NewPushHandler(pushSvc)
 
-	classRepo := repositories.NewClassRepository(db)
 	classSvc := services.NewClassService(classRepo, userRepo)
 	classHdl := handlers.NewClassHandler(classSvc)
 
-	examPeriodRepo := repositories.NewExamPeriodRepository(db)
 	examPeriodSvc := services.NewExamPeriodService(examPeriodRepo)
 	examPeriodHdl := handlers.NewExamPeriodHandler(examPeriodSvc)
 
@@ -51,7 +54,7 @@ func NewContainer(db *sql.DB) *Container {
 	if dataDir == "" {
 		dataDir = "./data"
 	}
-	todoRepo := repositories.NewTodoRepository(db)
+
 	todoSvc := services.NewTodoService(todoRepo)
 	todoHdl := handlers.NewTodoHandler(todoSvc)
 
@@ -66,7 +69,6 @@ func NewContainer(db *sql.DB) *Container {
 
 	loginHdl := handlers.NewLoginHandler(authSvc)
 
-	assignmentRepo := repositories.NewAssignmentRepository(db)
 	assignmentSvc := services.NewAssignmentService(assignmentRepo)
 	assignmentHdl := handlers.NewAssignmentHandler(assignmentSvc)
 

@@ -28,6 +28,7 @@ func (r *todoRepository) GetAllTodos() ([]*models.Todo, error) {
 	query := `
 		SELECT id, title, user_id, description, completed, created_at, updated_at
 		FROM todos
+		ORDER BY created_at DESC
 	`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -51,6 +52,7 @@ func (r *todoRepository) GetTodosByUserID(userID string) ([]*models.Todo, error)
 		SELECT id, title, user_id, description, completed, created_at, updated_at
 		FROM todos
 		WHERE user_id = $1
+		ORDER BY created_at DESC
 	`
 	rows, err := r.db.Query(query, userID)
 	if err != nil {
@@ -88,8 +90,10 @@ func (r *todoRepository) CreateTodo(todo *models.Todo) error {
 	query := `
 		INSERT INTO todos (title, user_id, description, completed)
 		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at, updated_at
 	`
-	_, err := r.db.Exec(query, todo.Title, todo.UserID, todo.Description, todo.Completed)
+	err := r.db.QueryRow(query, todo.Title, todo.UserID, todo.Description, todo.Completed).
+		Scan(&todo.ID, &todo.CreatedAt, &todo.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -101,8 +105,10 @@ func (r *todoRepository) UpdateTodo(id int64, todo *models.Todo) error {
 		UPDATE todos
 		SET title = $1, user_id = $2, description = $3, completed = $4, updated_at = now()
 		WHERE id = $5
+		RETURNING updated_at
 	`
-	_, err := r.db.Exec(query, todo.Title, todo.UserID, todo.Description, todo.Completed, id)
+	err := r.db.QueryRow(query, todo.Title, todo.UserID, todo.Description, todo.Completed, id).
+		Scan(&todo.UpdatedAt)
 	if err != nil {
 		return err
 	}

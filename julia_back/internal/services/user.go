@@ -20,8 +20,8 @@ type userService struct {
 	todoRepo repositories.TodoRepository
 }
 
-func NewUserService(userRepo repositories.UserRepository) UserService {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repositories.UserRepository, todoRepo repositories.TodoRepository) UserService {
+	return &userService{userRepo: userRepo, todoRepo: todoRepo}
 }
 
 func (s *userService) GetUserByID(id string) (*models.User, error) {
