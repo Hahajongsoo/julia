@@ -5,7 +5,7 @@
 	import { API_ENDPOINTS } from '$lib/config';
 	import { enablePush, disablePush, getPushSubscription, getUserSubscriptions } from '$lib/push';
 	import Toast from '$lib/components/Toast.svelte';
-	import MemoPanel from '$lib/components/MemoPanel.svelte';
+	import TodosPanel from '$lib/components/TodosPanel.svelte';
 	import AssignmentPanel from '$lib/components/AssignmentPanel.svelte';
 	import MakeupModal from '$lib/components/MakeupModal.svelte';
 	import AgendaView from '$lib/components/AgendaView.svelte';
@@ -50,8 +50,8 @@
 	let examPeriods = [];
 	let examPeriodsLoading = false;
 
-	// 메모 관련 상태
-	let showMemoPanel = false;
+	// 할 일 관련 상태
+	let showTodosPanel = false;
 
 	// 과제 관련 상태
 	let showAssignmentPanel = false;
@@ -255,8 +255,8 @@
 		if (event.key === 'Escape') {
 			if (showModal) {
 					closeModal();
-			} else if (showMemoPanel) {
-				showMemoPanel = false;
+			} else if (showTodosPanel) {
+				showTodosPanel = false;
 			} else if (showAssignmentPanel) {
 				showAssignmentPanel = false;
 			}
@@ -296,9 +296,9 @@
 		}
 	}
 
-	// 메모 관련 함수들
-	function toggleMemoPanel() {
-		showMemoPanel = !showMemoPanel;
+	// 할 일 관련 함수들
+	function toggleTodosPanel() {
+		showTodosPanel = !showTodosPanel;
 	}
 
 	// 토스트 알림 함수
@@ -397,7 +397,7 @@
 		on:enablePush={handleEnablePush}
 		on:disablePush={handleDisablePush}
 		on:toggleAssignmentPanel={toggleAssignmentPanel}
-		on:toggleMemoPanel={toggleMemoPanel}
+		on:toggleTodosPanel={toggleTodosPanel}
 	/>
 
 	{#if isLoading}
@@ -440,10 +440,11 @@
 	<!-- 토스트 컴포넌트 -->
 	<Toast bind:this={toastComponent} />
 
-	<!-- 메모 패널 컴포넌트 -->
-	<MemoPanel 
-		bind:isVisible={showMemoPanel} 
+	<!-- 할 일 패널 컴포넌트 -->
+	<TodosPanel 
+		bind:isVisible={showTodosPanel}
 		{userRole}
+		{currentUser}
 		on:toast={(e) => showToast(e.detail.message, e.detail.type)}
 	/>
 

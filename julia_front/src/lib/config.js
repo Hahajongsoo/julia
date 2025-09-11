@@ -26,12 +26,13 @@ export const API_ENDPOINTS = {
 	EXAM_PERIODS: `${API_BASE_URL}/exam-periods`,
 	EXAM_PERIODS_BY_CLASS: (classId) => `${API_BASE_URL}/exam-periods/class/${classId}`,
 	EXAM_PERIOD_BY_ID: (examPeriodId) => `${API_BASE_URL}/exam-periods/${examPeriodId}`,
-	// 관리자 메모 관련 엔드포인트
-	ADMIN_MEMO: `${API_BASE_URL}/admin/memo`,
 	// 과제 관련 엔드포인트
 	ASSIGNMENTS: `${API_BASE_URL}/assignments`,
 	ASSIGNMENTS_BY_USER: (userId) => `${API_BASE_URL}/assignments/user/${userId}`,
 	CLASS_ASSIGNMENTS: `${API_BASE_URL}/classes/assignments`,
 	// 반 관련 엔드포인트
 	CLASSES: `${API_BASE_URL}/classes`,
+	// Todos 관련 엔드포인트
+	TODOS: `${API_BASE_URL}/todos`,
+	TODOS_BY_USER: (userId) => `${API_BASE_URL}/users/${userId}/todos`,
 };
