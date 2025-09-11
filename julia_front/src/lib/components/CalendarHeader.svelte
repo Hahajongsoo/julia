@@ -69,8 +69,8 @@
 		dispatch('toggleAssignmentPanel');
 	}
 
-	function handleToggleMemoPanel() {
-		dispatch('toggleMemoPanel');
+	function handleToggleTodosPanel() {
+		dispatch('toggleTodosPanel');
 	}
 </script>
 
@@ -192,24 +192,19 @@
 				과제
 			</button>
 			
-			<!-- 메모 아이콘 추가 -->
-			{#if userRole === 'admin'}
-				<button 
-					class="btn ghost memo-toggle" 
-					on:click={handleToggleMemoPanel}
-					aria-label="메모장 열기"
-					title="메모장"
-				>
-					<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-						<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" fill="none" stroke-width="2"/>
-						<polyline points="14,2 14,8 20,8" stroke="currentColor" fill="none" stroke-width="2"/>
-						<line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
-						<line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
-						<polyline points="10,9 9,9 8,9" stroke="currentColor" fill="none" stroke-width="2"/>
-					</svg>
-					메모
-				</button>
-			{/if}
+			<!-- 할 일 아이콘 추가 -->
+			<button 
+				class="btn ghost todos-toggle" 
+				on:click={handleToggleTodosPanel}
+				aria-label="할 일 목록 열기"
+				title="할 일 목록"
+			>
+				<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+					<path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z" stroke="currentColor" fill="none" stroke-width="2"/>
+				</svg>
+				할 일
+			</button>
 			
 			<div class="seg">
 				<button
@@ -520,21 +515,21 @@
 		border-color: var(--brand);
 	}
 
-	/* 메모 아이콘 스타일 */
-	.memo-toggle {
+	/* 할 일 아이콘 스타일 */
+	.todos-toggle {
 		display: flex;
 		align-items: center;
 		gap: 6px;
 		margin-right: 8px;
 	}
 
-	.memo-toggle svg {
+	.todos-toggle svg {
 		stroke: currentColor;
 		fill: none;
 		stroke-width: 2;
 	}
 
-	.memo-toggle:hover {
+	.todos-toggle:hover {
 		background: var(--bg);
 		color: var(--text);
 		border-color: var(--brand);
@@ -648,12 +643,12 @@
 			height: 14px;
 		}
 		
-		.memo-toggle {
+		.todos-toggle {
 			font-size: 11px;
 			padding: 3px 4px;
 		}
 		
-		.memo-toggle svg {
+		.todos-toggle svg {
 			width: 14px;
 			height: 14px;
 		}

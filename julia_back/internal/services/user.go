@@ -9,6 +9,7 @@ import (
 type UserService interface {
 	GetUserByID(id string) (*models.User, error)
 	GetAllUsers() ([]*models.User, error)
+	GetTodosByUserID(userID string) ([]*models.Todo, error)
 	CreateUser(user *models.User) error
 	UpdateUser(id string, user *models.User) error
 	DeleteUser(id string) error
@@ -16,10 +17,11 @@ type UserService interface {
 
 type userService struct {
 	userRepo repositories.UserRepository
+	todoRepo repositories.TodoRepository
 }
 
-func NewUserService(userRepo repositories.UserRepository) UserService {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repositories.UserRepository, todoRepo repositories.TodoRepository) UserService {
+	return &userService{userRepo: userRepo, todoRepo: todoRepo}
 }
 
 func (s *userService) GetUserByID(id string) (*models.User, error) {
@@ -28,6 +30,10 @@ func (s *userService) GetUserByID(id string) (*models.User, error) {
 
 func (s *userService) GetAllUsers() ([]*models.User, error) {
 	return s.userRepo.GetAllUsers()
+}
+
+func (s *userService) GetTodosByUserID(userID string) ([]*models.Todo, error) {
+	return s.todoRepo.GetTodosByUserID(userID)
 }
 
 func (s *userService) CreateUser(user *models.User) error {

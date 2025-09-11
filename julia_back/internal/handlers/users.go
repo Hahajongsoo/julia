@@ -39,6 +39,16 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, user.ToResponseUser())
 }
 
+func (h *UserHandler) GetTodosByUserID(c *gin.Context) {
+	id := c.Param("id")
+	todos, err := h.userService.GetTodosByUserID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, todos)
+}
+
 func (h *UserHandler) Create(c *gin.Context) {
 	var inputUser *models.User
 	if err := c.ShouldBindJSON(&inputUser); err != nil {
