@@ -14,6 +14,12 @@
 	let newTodoTitle = '';
 	let newTodoDescription = '';
 	let showAddForm = false;
+	
+	// 관리자용 상태
+	let classes = [];
+	let expandedClasses = [-1]; // 기본적으로 "할 일" 섹션을 열어둠
+	let classTodos = {}; // 반별 할 일 저장
+	let newTodoClassId = null; // 새 할 일 추가 시 선택할 반 ID (null = 선택 안함)
 
 	// Todos 패널 열기/닫기
 	function togglePanel() {
@@ -24,8 +30,28 @@
 		dispatch('toggle', { isVisible });
 	}
 
+	// 반 토글 함수 (과제와 동일한 방식)
+	function toggleClass(classId) {
+		const index = expandedClasses.indexOf(classId);
+		if (index > -1) {
+			// 이미 펼쳐져 있으면 접기
+			expandedClasses = expandedClasses.filter(id => id !== classId);
+		} else {
+			// 접혀져 있으면 펼치기
+			expandedClasses = [...expandedClasses, classId];
+		}
+	}
+
+	// 반이 펼쳐져 있는지 확인 (반응형으로 변경)
+	$: isClassExpanded = (classId) => {
+		return expandedClasses.includes(classId);
+	};
+
 	// currentUser가 변경될 때도 할 일 로드
 	$: if (isVisible && currentUser?.id) {
+		if (userRole === 'admin') {
+			loadClasses();
+		}
 		loadTodos();
 	}
 
@@ -34,32 +60,55 @@
 		dispatch('close');
 	}
 
+	// 반 목록 로드
+	async function loadClasses() {
+		try {
+			const response = await fetchWithAuth(API_ENDPOINTS.CLASSES);
+			if (response.ok) {
+				classes = await response.json();
+			} else {
+				console.error('반 목록 로드 실패');
+			}
+		} catch (error) {
+			console.error('반 목록 로드 오류:', error);
+		}
+	}
+
 	// Todos 로드
 	async function loadTodos() {
-		console.log('loadTodos 호출됨, currentUser:', currentUser);
-		
 		if (!currentUser?.id) {
-			console.log('currentUser.id가 없음');
 			todos = [];
 			return;
 		}
 
 		isLoading = true;
-		console.log('할 일 로드 시작, userId:', currentUser.id);
 		
 		try {
 			const response = await fetchWithAuth(API_ENDPOINTS.TODOS_BY_USER(currentUser.id));
-			console.log('API 응답:', response);
-			
 			if (response.ok) {
-				todos = await response.json();
-				console.log('로드된 할 일:', todos);
+				const classTodosData = await response.json();
+				
+				// 반별로 분류 및 null 값 필터링
+				classTodos = {};
+				const allTodos = [];
+				
+				for (const classData of classTodosData) {
+					const validTodos = (classData.todos || []).filter(todo => todo !== null);
+					classTodos[classData.class_id] = validTodos;
+					allTodos.push(...validTodos);
+				}
+				
+				// 관리자는 모든 섹션을 기본적으로 열어둠
+				if (userRole === 'admin') {
+					expandedClasses = Object.keys(classTodos).map(id => parseInt(id));
+				}
+				
+				todos = allTodos;
 			} else {
-				console.error('Todos 로드 실패, status:', response.status);
 				todos = [];
 			}
 		} catch (error) {
-			console.error('Todos 로드 오류:', error);
+			console.error('할 일 로드 오류:', error);
 			todos = [];
 		} finally {
 			isLoading = false;
@@ -78,6 +127,11 @@
 				completed: false
 			};
 
+			// 관리자는 class_id를 payload에 포함
+			if (userRole === 'admin' && newTodoClassId !== null) {
+				todoData.class_id = newTodoClassId;
+			}
+
 			const response = await fetchWithAuth(API_ENDPOINTS.TODOS, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -86,9 +140,21 @@
 
 			if (response.ok) {
 				const newTodo = await response.json();
+				
+				// todos 배열에 추가
 				todos = [...todos, newTodo];
+				
+				// classTodos도 업데이트
+				const classId = newTodo.class_id || -1;
+				if (!classTodos[classId]) {
+					classTodos[classId] = [];
+				}
+				classTodos[classId] = [...classTodos[classId], newTodo];
+				classTodos = { ...classTodos };
+				
 				newTodoTitle = '';
 				newTodoDescription = '';
+				newTodoClassId = null; // 관리자용 반 선택 초기화
 				showAddForm = false;
 				dispatch('toast', { message: '할 일이 추가되었습니다.', type: 'success' });
 			} else {
@@ -115,7 +181,16 @@
 			});
 
 			if (response.ok) {
+				// todos 배열 업데이트
 				todos = todos.map(t => t.id === todo.id ? { ...t, completed: !t.completed } : t);
+				
+				// classTodos도 업데이트 (관리자용)
+				for (const classId in classTodos) {
+					classTodos[classId] = classTodos[classId].map(t => 
+						t.id === todo.id ? { ...t, completed: !t.completed } : t
+					);
+				}
+				classTodos = { ...classTodos };
 			} else {
 				dispatch('toast', { message: '상태 변경에 실패했습니다.', type: 'error' });
 			}
@@ -135,7 +210,15 @@
 			});
 
 			if (response.ok) {
+				// todos 배열에서 제거
 				todos = todos.filter(t => t.id !== todo.id);
+				
+				// classTodos에서도 제거
+				for (const classId in classTodos) {
+					classTodos[classId] = classTodos[classId].filter(t => t.id !== todo.id);
+				}
+				classTodos = { ...classTodos };
+				
 				dispatch('toast', { message: '할 일이 삭제되었습니다.', type: 'success' });
 			} else {
 				dispatch('toast', { message: '할 일 삭제에 실패했습니다.', type: 'error' });
@@ -149,6 +232,7 @@
 	// 완료된 Todo 개수 계산
 	$: completedCount = todos.filter(t => t.completed).length;
 	$: totalCount = todos.length;
+	$: progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
 	// 외부에서 호출할 수 있도록 함수 노출
 	export { togglePanel, closePanel };
@@ -170,16 +254,30 @@
 			<div class="todos-stats">
 				<span class="stats-text">완료: {completedCount}/{totalCount}</span>
 				{#if totalCount > 0}
-					<span class="progress-bar">
-						<span class="progress-fill" style="width: {(completedCount / totalCount) * 100}%"></span>
-					</span>
+					<div class="progress-bar">
+						<div class="progress-fill" style="width: {progressPercentage}%"></div>
+					</div>
 				{/if}
 			</div>
-
-			<!-- 새 할 일 추가 폼 -->
-			<div class="add-todo-section">
+				<!-- 새 할 일 추가 폼 -->
+				<div class="add-todo-section">
 				{#if showAddForm}
 					<div class="add-todo-form">
+						{#if userRole === 'admin'}
+							<div class="form-group">
+								<label for="new-todo-class">반 선택 (선택사항)</label>
+								<select
+									id="new-todo-class"
+									bind:value={newTodoClassId}
+									class="todo-select"
+								>
+									<option value={null}>선택 안함</option>
+									{#each classes as classItem}
+										<option value={classItem.class_id}>{classItem.class_name}</option>
+									{/each}
+								</select>
+							</div>
+						{/if}
 						<input
 							bind:value={newTodoTitle}
 							placeholder="할 일 제목을 입력하세요"
@@ -196,7 +294,7 @@
 							<button class="btn primary" on:click={addTodo} disabled={!newTodoTitle.trim()}>
 								추가
 							</button>
-							<button class="btn ghost" on:click={() => { showAddForm = false; newTodoTitle = ''; newTodoDescription = ''; }}>
+							<button class="btn ghost" on:click={() => { showAddForm = false; newTodoTitle = ''; newTodoDescription = ''; newTodoClassId = null; }}>
 								취소
 							</button>
 						</div>
@@ -215,57 +313,207 @@
 			<div class="todos-list">
 				{#if isLoading}
 					<div class="loading">할 일을 불러오는 중...</div>
-				{:else if todos.length === 0}
-					<div class="empty-state">
-						<svg width="48" height="48" viewBox="0 0 24 24">
-							<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
-							<path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z" stroke="currentColor" fill="none" stroke-width="2"/>
-						</svg>
-						<p>할 일이 없습니다</p>
-						<p class="empty-hint">새 할 일을 추가해보세요!</p>
-					</div>
-				{:else}
-					{#each todos as todo}
-						<div class="todo-item" class:completed={todo.completed}>
-							<div class="todo-main">
-								<button 
-									class="todo-checkbox" 
-									on:click={() => toggleTodo(todo)}
-									aria-label={todo.completed ? '완료 취소' : '완료 표시'}
-								>
-									{#if todo.completed}
-										<svg width="16" height="16" viewBox="0 0 24 24">
-											<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+				{:else if userRole === 'admin'}
+					<!-- 관리자용: 반별 토글 방식 -->
+					<!-- 일반 할 일 섹션 -->
+					{#if classTodos[-1] && classTodos[-1].length > 0}
+						<div class="todo-class-section">
+							<div class="todo-class-header" on:click={() => toggleClass(-1)}>
+								<h4 class="todo-class-title">할 일</h4>
+								<div class="todo-class-toggle">
+									<svg 
+										class="todo-toggle-icon" 
+										class:expanded={isClassExpanded(-1)}
+										width="16" 
+										height="16" 
+										viewBox="0 0 24 24"
+									>
+										<path d="M6 9l6 6 6-6" stroke="currentColor" fill="none" stroke-width="2"/>
+									</svg>
+								</div>
+							</div>
+							
+							{#if isClassExpanded(-1)}
+								<div class="todo-class-content">
+									{#each classTodos[-1] as todo}
+										<div class="todo-item" class:completed={todo.completed}>
+											<div class="todo-main">
+												<button 
+													class="todo-checkbox" 
+													on:click={() => toggleTodo(todo)}
+													aria-label={todo.completed ? '완료 취소' : '완료 표시'}
+												>
+													{#if todo.completed}
+														<svg width="16" height="16" viewBox="0 0 24 24">
+															<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+														</svg>
+													{/if}
+												</button>
+												<div class="todo-content">
+													<h4 class="todo-title" class:completed={todo.completed}>{todo.title}</h4>
+													{#if todo.description}
+														<p class="todo-description">{todo.description}</p>
+													{/if}
+													<div class="todo-meta">
+														<span class="todo-date">{new Date(todo.created_at).toLocaleString('ko-KR', {
+															year: 'numeric',
+															month: '2-digit',
+															day: '2-digit',
+															hour: '2-digit',
+															minute: '2-digit'
+														})}</span>
+													</div>
+												</div>
+												<button 
+													class="todo-delete-btn" 
+													on:click={() => deleteTodo(todo)}
+													aria-label="삭제"
+												>
+													<svg width="16" height="16" viewBox="0 0 24 24">
+														<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0v14M10 11v6M14 11v6" stroke="currentColor" fill="none" stroke-width="2"/>
+													</svg>
+												</button>
+											</div>
+										</div>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					{/if}
+
+					<!-- 반별 할 일 섹션 -->
+					{#each classes as classItem}
+						{#if classTodos[classItem.class_id] && classTodos[classItem.class_id].length > 0}
+							<div class="todo-class-section">
+								<div class="todo-class-header" on:click={() => toggleClass(classItem.class_id)}>
+									<h4 class="todo-class-title">{classItem.class_name}</h4>
+									<div class="todo-class-toggle">
+										<svg 
+											class="todo-toggle-icon" 
+											class:expanded={isClassExpanded(classItem.class_id)}
+											width="16" 
+											height="16" 
+											viewBox="0 0 24 24"
+										>
+											<path d="M6 9l6 6 6-6" stroke="currentColor" fill="none" stroke-width="2"/>
 										</svg>
-									{/if}
-								</button>
-								<div class="todo-content">
-									<h4 class="todo-title" class:completed={todo.completed}>{todo.title}</h4>
-									{#if todo.description}
-										<p class="todo-description">{todo.description}</p>
-									{/if}
-									<div class="todo-meta">
-										<span class="todo-date">{new Date(todo.created_at).toLocaleString('ko-KR', {
-											year: 'numeric',
-											month: '2-digit',
-											day: '2-digit',
-											hour: '2-digit',
-											minute: '2-digit'
-										})}</span>
 									</div>
 								</div>
-								<button 
-									class="todo-delete-btn" 
-									on:click={() => deleteTodo(todo)}
-									aria-label="삭제"
-								>
-									<svg width="16" height="16" viewBox="0 0 24 24">
-										<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0v14M10 11v6M14 11v6" stroke="currentColor" fill="none" stroke-width="2"/>
-									</svg>
-								</button>
+								
+								{#if isClassExpanded(classItem.class_id)}
+									<div class="todo-class-content">
+										{#each classTodos[classItem.class_id] as todo}
+											<div class="todo-item" class:completed={todo.completed}>
+												<div class="todo-main">
+													<button 
+														class="todo-checkbox" 
+														on:click={() => toggleTodo(todo)}
+														aria-label={todo.completed ? '완료 취소' : '완료 표시'}
+													>
+														{#if todo.completed}
+															<svg width="16" height="16" viewBox="0 0 24 24">
+																<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+															</svg>
+														{/if}
+													</button>
+													<div class="todo-content">
+														<h4 class="todo-title" class:completed={todo.completed}>{todo.title}</h4>
+														{#if todo.description}
+															<p class="todo-description">{todo.description}</p>
+														{/if}
+														<div class="todo-meta">
+															<span class="todo-date">{new Date(todo.created_at).toLocaleString('ko-KR', {
+																year: 'numeric',
+																month: '2-digit',
+																day: '2-digit',
+																hour: '2-digit',
+																minute: '2-digit'
+															})}</span>
+														</div>
+													</div>
+													<button 
+														class="todo-delete-btn" 
+														on:click={() => deleteTodo(todo)}
+														aria-label="삭제"
+													>
+														<svg width="16" height="16" viewBox="0 0 24 24">
+															<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0v14M10 11v6M14 11v6" stroke="currentColor" fill="none" stroke-width="2"/>
+														</svg>
+													</button>
+												</div>
+											</div>
+										{/each}
+									</div>
+								{/if}
 							</div>
-						</div>
+						{/if}
 					{/each}
+
+					<!-- 할 일이 없는 경우 -->
+					{#if todos.length === 0}
+						<div class="empty-state">
+							<svg width="48" height="48" viewBox="0 0 24 24">
+								<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+								<path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z" stroke="currentColor" fill="none" stroke-width="2"/>
+							</svg>
+							<p>할 일이 없습니다</p>
+							<p class="empty-hint">새 할 일을 추가해보세요!</p>
+						</div>
+					{/if}
+				{:else}
+					<!-- 학생용: 일반 목록 -->
+					{#if todos.length === 0}
+						<div class="empty-state">
+							<svg width="48" height="48" viewBox="0 0 24 24">
+								<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+								<path d="M21 12c0 1.66-1.34 3-3 3H6c-1.66 0-3-1.34-3-3s1.34-3 3-3h12c1.66 0 3 1.34 3 3z" stroke="currentColor" fill="none" stroke-width="2"/>
+							</svg>
+							<p>할 일이 없습니다</p>
+							<p class="empty-hint">새 할 일을 추가해보세요!</p>
+						</div>
+					{:else}
+						{#each todos as todo}
+							<div class="todo-item" class:completed={todo.completed}>
+								<div class="todo-main">
+									<button 
+										class="todo-checkbox" 
+										on:click={() => toggleTodo(todo)}
+										aria-label={todo.completed ? '완료 취소' : '완료 표시'}
+									>
+										{#if todo.completed}
+											<svg width="16" height="16" viewBox="0 0 24 24">
+												<path d="M9 12l2 2 4-4" stroke="currentColor" fill="none" stroke-width="2"/>
+											</svg>
+										{/if}
+									</button>
+									<div class="todo-content">
+										<h4 class="todo-title" class:completed={todo.completed}>{todo.title}</h4>
+										{#if todo.description}
+											<p class="todo-description">{todo.description}</p>
+										{/if}
+										<div class="todo-meta">
+											<span class="todo-date">{new Date(todo.created_at).toLocaleString('ko-KR', {
+												year: 'numeric',
+												month: '2-digit',
+												day: '2-digit',
+												hour: '2-digit',
+												minute: '2-digit'
+											})}</span>
+										</div>
+									</div>
+									<button 
+										class="todo-delete-btn" 
+										on:click={() => deleteTodo(todo)}
+										aria-label="삭제"
+									>
+										<svg width="16" height="16" viewBox="0 0 24 24">
+											<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0v14M10 11v6M14 11v6" stroke="currentColor" fill="none" stroke-width="2"/>
+										</svg>
+									</button>
+								</div>
+							</div>
+						{/each}
+					{/if}
 				{/if}
 			</div>
 		</div>
@@ -384,6 +632,99 @@
 		flex-direction: column;
 		padding: 20px;
 		overflow-y: auto;
+	}
+
+	/* 반별 토글 섹션 스타일 (과제와 동일) */
+	.todo-class-section {
+		margin-bottom: 16px;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		overflow: hidden;
+		background: var(--card);
+	}
+
+	.todo-class-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px 20px;
+		background: var(--bg);
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+		border-bottom: 1px solid var(--line);
+	}
+
+	.todo-class-header:hover {
+		background: color-mix(in srgb, var(--brand) 5%, var(--bg));
+	}
+
+	.todo-class-title {
+		font-size: 16px;
+		font-weight: 600;
+		color: var(--text);
+		margin: 0;
+	}
+
+	.todo-class-toggle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		background: transparent;
+		transition: all 0.2s ease;
+	}
+
+	.todo-class-toggle:hover {
+		background: color-mix(in srgb, var(--brand) 10%, transparent);
+	}
+
+	.todo-toggle-icon {
+		width: 16px;
+		height: 16px;
+		color: var(--muted);
+		transition: transform 0.2s ease;
+	}
+
+	.todo-toggle-icon.expanded {
+		transform: rotate(180deg);
+		color: var(--brand);
+	}
+
+	.todo-class-content {
+		padding: 0;
+		background: var(--card);
+	}
+
+	.form-group {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
+
+	.form-group label {
+		font-weight: 600;
+		font-size: 14px;
+		color: var(--text);
+	}
+
+	.todo-select {
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		padding: 12px;
+		font-family: inherit;
+		font-size: 14px;
+		background: var(--card);
+		color: var(--text);
+		transition: all 0.2s ease;
+	}
+
+	.todo-select:focus {
+		outline: none;
+		border-color: var(--brand);
+		box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 20%, transparent);
 	}
 
 	.todos-stats {
