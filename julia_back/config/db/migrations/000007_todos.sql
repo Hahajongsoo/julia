@@ -2,6 +2,7 @@ CREATE TABLE todos (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     user_id TEXT NOT NULL,
+    class_id BIGINT NULL,
     description TEXT,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at timestamptz DEFAULT NOW(),
@@ -9,5 +10,9 @@ CREATE TABLE todos (
     CONSTRAINT fk_todos_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_todos_class
+        FOREIGN KEY (class_id)
+        REFERENCES classes(class_id)
         ON DELETE CASCADE
 );

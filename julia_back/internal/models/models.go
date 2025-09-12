@@ -263,8 +263,27 @@ type Todo struct {
 	ID          int64     `json:"id"`
 	Title       string    `json:"title"`
 	UserID      string    `json:"user_id"`
+	ClassID     *int64    `json:"class_id"`
 	Description string    `json:"description"`
 	Completed   bool      `json:"completed"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type TodoRow struct {
+	TodoID      int64     `json:"todo_id"`
+	Title       string    `json:"title"`
+	UserID      string    `json:"user_id"`
+	ClassID     int64     `json:"class_id"`
+	ClassName   string    `json:"class_name"`
+	Description string    `json:"description"`
+	Completed   bool      `json:"completed"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type ClassTodos struct {
+	ClassID   int64   `json:"class_id"`
+	ClassName string  `json:"class_name"`
+	Todos     []*Todo `json:"todos"`
 }

@@ -14,14 +14,13 @@ func SetupRouter(router *gin.Engine, c *di.Container) {
 
 	user := router.Group("/users")
 	user.Use(middlewares.AuthMiddleware(c.AuthService))
-	user.Use(middlewares.AdminAuthMiddleware(c.AuthService, c.UserService))
 	{
-		user.GET("", c.UserHandler.GetAll)
-		user.GET("/:id", c.UserHandler.GetByID)
+		user.GET("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.UserHandler.GetAll)
+		user.GET("/:id", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.UserHandler.GetByID)
 		user.GET("/:id/todos", c.UserHandler.GetTodosByUserID)
-		user.POST("", c.UserHandler.Create)
-		user.PUT("/:id", c.UserHandler.Update)
-		user.DELETE("/:id", c.UserHandler.Delete)
+		user.POST("", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.UserHandler.Create)
+		user.PUT("/:id", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.UserHandler.Update)
+		user.DELETE("/:id", middlewares.AdminAuthMiddleware(c.AuthService, c.UserService), c.UserHandler.Delete)
 	}
 	classes := router.Group("/classes")
 	classes.Use(middlewares.AuthMiddleware(c.AuthService))
