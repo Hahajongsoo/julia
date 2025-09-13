@@ -46,9 +46,8 @@ services:
     image: postgres:17-alpine
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: "1234"
-      TZ: "Asia/Seoul"
+    env_file:
+      - .env.postgres
     volumes:
       - db-data-dev:/var/lib/postgresql/data
     networks:
