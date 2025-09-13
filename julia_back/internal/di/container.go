@@ -7,6 +7,7 @@ import (
 	"julia/internal/services"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -22,6 +23,46 @@ type Container struct {
 	ExamPeriodHandler   *handlers.ExamPeriodHandler
 	TodoHandler         *handlers.TodoHandler
 	AssignmentHandler   *handlers.AssignmentHandler
+}
+
+// Helper functions for environment variable parsing
+func getDurationFromEnv(key string, defaultValue time.Duration) time.Duration {
+	if value := os.Getenv(key); value != "" {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
+		}
+	}
+	return defaultValue
+}
+
+func getStringFromEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getBoolFromEnv(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if parsed, err := strconv.ParseBool(value); err == nil {
+			return parsed
+		}
+	}
+	return defaultValue
+}
+
+func getSameSiteFromEnv(key string, defaultValue http.SameSite) http.SameSite {
+	if value := os.Getenv(key); value != "" {
+		switch value {
+		case "strict":
+			return http.SameSiteStrictMode
+		case "lax":
+			return http.SameSiteLaxMode
+		case "none":
+			return http.SameSiteNoneMode
+		}
+	}
+	return defaultValue
 }
 
 func NewContainer(db *sql.DB) *Container {
@@ -57,14 +98,18 @@ func NewContainer(db *sql.DB) *Container {
 
 	todoSvc := services.NewTodoService(todoRepo)
 	todoHdl := handlers.NewTodoHandler(todoSvc)
-
+	if os.Getenv("HMAC_SECRET") == "" {
+		panic("HMAC_SECRET is not set")
+	}
 	authSvc := services.NewAuthService(userRepo, services.Config{
-		SessionTTL: 30 * time.Minute,
+		SessionTTL: getDurationFromEnv("SESSION_TTL", 30*time.Minute),
 		HMACSecret: []byte(os.Getenv("HMAC_SECRET")),
-		CookieName: "my-session",
-		CookiePath: "/",
-		Secure:     false,
-		SameSite:   http.SameSiteLaxMode,
+		CookieName: getStringFromEnv("COOKIE_NAME", "my-session"),
+		CookiePath: getStringFromEnv("COOKIE_PATH", "/"),
+		Secure:     getBoolFromEnv("COOKIE_SECURE", true),
+		HttpOnly:   getBoolFromEnv("COOKIE_HTTP_ONLY", true),
+		SameSite:   getSameSiteFromEnv("COOKIE_SAME_SITE", http.SameSiteLaxMode),
+		Domain:     os.Getenv("COOKIE_DOMAIN"),
 	})
 
 	loginHdl := handlers.NewLoginHandler(authSvc)

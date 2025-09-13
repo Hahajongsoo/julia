@@ -16,6 +16,7 @@ type Config struct {
 	CookieName string
 	CookiePath string
 	Secure     bool
+	HttpOnly   bool
 	SameSite   http.SameSite
 	Domain     string
 }
@@ -115,8 +116,8 @@ func (s *authService) IssueSessionCookie(w http.ResponseWriter, sid string) {
 		Name:     s.cfg.CookieName,
 		Path:     s.cfg.CookiePath,
 		MaxAge:   int(s.cfg.SessionTTL.Seconds()),
-		HttpOnly: false, // 개발 환경에서는 false로 설정
 		Secure:   s.cfg.Secure,
+		HttpOnly: s.cfg.HttpOnly,
 		SameSite: s.cfg.SameSite,
 		Domain:   s.cfg.Domain,
 	})
@@ -127,8 +128,8 @@ func (s *authService) ClearSessionCookie(w http.ResponseWriter) {
 		Name:     s.cfg.CookieName,
 		Path:     s.cfg.CookiePath,
 		MaxAge:   0,
-		HttpOnly: false, // 개발 환경에서는 false로 설정
 		Secure:   s.cfg.Secure,
+		HttpOnly: s.cfg.HttpOnly,
 		SameSite: s.cfg.SameSite,
 		Domain:   s.cfg.Domain,
 	})

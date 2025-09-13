@@ -10,6 +10,12 @@ services:
       - ./julia_back:/app
     environment:
       - GIN_MODE=debug
+      - COOKIE_SECURE=false
+      - SESSION_TTL=30m
+      - COOKIE_NAME=my-session
+      - COOKIE_PATH=/
+      - COOKIE_HTTP_ONLY=true
+      - COOKIE_SAME_SITE=lax
     env_file:
       - ./julia_back/.env.dev
     restart: unless-stopped

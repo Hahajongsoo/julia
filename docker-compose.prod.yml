@@ -3,9 +3,8 @@ name: julia
 services:
   postgres:
     image: postgres:17-alpine
-    environment:
-      POSTGRES_PASSWORD: "1234"
-      TZ: "Asia/Seoul"
+    env_file:
+      - .env.postgres
     volumes:
       - db-data:/var/lib/postgresql/data
     networks:
@@ -27,6 +26,13 @@ services:
     environment:
       - GIN_MODE=release
       - TZ=Asia/Seoul
+      - COOKIE_SECURE=true
+      - SESSION_TTL=30m
+      - COOKIE_NAME=my-session
+      - COOKIE_PATH=/
+      - COOKIE_HTTP_ONLY=true
+      - COOKIE_SAME_SITE=lax
+      - COOKIE_DOMAIN=hapcky.me
     env_file:
       - ./julia_back/.env
     depends_on:
