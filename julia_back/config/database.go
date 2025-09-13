@@ -2,6 +2,7 @@ package config
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 
@@ -16,34 +17,18 @@ func ConnectDB() (*sql.DB, error) {
 	dbname := os.Getenv("DB_NAME")
 	sslmode := os.Getenv("DB_SSLMODE")
 
-	if host == "" {
-		host = "postgres-dev"
-	}
-	if port == "" {
-		port = "5432"
-	}
-	if sslmode == "" {
-		sslmode = "disable"
-	}
-	if user == "" {
-		user = "postgres"
-	}
-	if password == "" {
-		password = "1234"
-	}
-	if dbname == "" {
-		dbname = "julia_dev"
+	if host == "" || port == "" || user == "" || password == "" || dbname == "" || sslmode == "" {
+		return nil, errors.New("DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSLMODE are not set")
 	}
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		host, port, user, password, dbname, sslmode)
-
+	fmt.Println(connStr)
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
 
-	// 연결 테스트
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
