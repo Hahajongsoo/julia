@@ -30,6 +30,11 @@
 		status: 'pending',
 	};
 	let isCreating = false;
+	
+	// 여러명 선택 관련 상태
+	let isMultipleMode = false;
+	let selectedStudents = [];
+	let selectedStudentIds = [];
 
 	// 반 및 학생 관련 상태
 	let classes = [];
@@ -108,6 +113,10 @@
 			content: '',
 			status: 'pending'
 		};
+		// 여러명 선택 상태 초기화
+		isMultipleMode = false;
+		selectedStudents = [];
+		selectedStudentIds = [];
 	}
 
 	// 반 목록 가져오기
@@ -150,6 +159,8 @@
 		loadStudentsByClass(selectedClassId);
 		// 반이 변경되면 학생 선택 초기화
 		createFormData.user_id = '';
+		selectedStudents = [];
+		selectedStudentIds = [];
 	}
 
 	// 보강 생성 폼 열기
@@ -166,6 +177,10 @@
 		// 반과 학생 목록 초기화
 		selectedClassId = '';
 		students = [];
+		// 여러명 선택 상태 초기화
+		isMultipleMode = false;
+		selectedStudents = [];
+		selectedStudentIds = [];
 		// 반 목록 로드
 		loadClasses();
 	}
@@ -180,10 +195,34 @@
 			reason: '',
 			status: 'pending',
 		};
+		// 여러명 선택 상태 초기화
+		isMultipleMode = false;
+		selectedStudents = [];
+		selectedStudentIds = [];
 	}
 
-	// 보강 생성 요청
-	async function createMakeup() {
+	// selectedStudentIds 변경 시 selectedStudents 동기화
+	$: selectedStudents = students ? students.filter(student => selectedStudentIds.includes(student.id)) : [];
+
+	// 여러명 선택 모드 변경 시 처리 (무한 루프 방지)
+	let previousMultipleMode = false;
+	$: {
+		if (previousMultipleMode && !isMultipleMode) {
+			// 단일 모드로 돌아갈 때 선택된 학생들 초기화
+			selectedStudentIds = [];
+			createFormData.user_id = '';
+		}
+		previousMultipleMode = isMultipleMode;
+	}
+
+
+	// 선택된 학생 제거
+	function removeStudent(studentId) {
+		selectedStudentIds = selectedStudentIds.filter(id => id !== studentId);
+	}
+
+	// 보강 생성 요청 (단일)
+	async function createSingleMakeup() {
 		if (!createFormData.start_time || !createFormData.user_id) {
 			alert('시간과 학생명을 입력해주세요.');
 			return;
@@ -204,14 +243,109 @@
 				closeCreateForm();
 				dispatch('refresh');
 			} else {
-				const errorData = await res.json();
-				alert(`보강 생성 실패: ${errorData.message || '알 수 없는 오류가 발생했습니다.'}`);
+				let errorMessage = '보강 생성 실패';
+				try {
+					const errorData = await res.json();
+					errorMessage += `: ${errorData.message || '알 수 없는 오류가 발생했습니다.'}`;
+				} catch (parseError) {
+					errorMessage += `: HTTP ${res.status}`;
+				}
+				alert(errorMessage);
 			}
 		} catch (e) {
 			console.error('보강 생성 오류:', e);
 			alert('보강 생성 중 오류가 발생했습니다.');
 		} finally {
 			isCreating = false;
+		}
+	}
+
+	// 보강 생성 요청 (여러명)
+	async function createMultipleMakeups() {
+		if (!createFormData.start_time) {
+			alert('시간을 입력해주세요.');
+			return;
+		}
+
+		if (!selectedStudents || selectedStudents.length === 0) {
+			alert('학생을 선택해주세요.');
+			return;
+		}
+
+		isCreating = true;
+		let successCount = 0;
+		let failCount = 0;
+		const errors = [];
+
+		try {
+			// 각 학생에 대해 보강 생성 요청
+			for (const student of selectedStudents) {
+				if (!student || !student.id) {
+					failCount++;
+					errors.push(`잘못된 학생 데이터: ${JSON.stringify(student)}`);
+					continue;
+				}
+
+				const makeupData = {
+					...createFormData,
+					user_id: student.id
+				};
+
+				try {
+					const res = await fetchWithAuth(API_ENDPOINTS.MAKEUPS, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(makeupData),
+					});
+
+					if (res.ok) {
+						successCount++;
+					} else {
+						failCount++;
+						let errorMessage = `학생 ${student.id} 보강 생성 실패`;
+						try {
+							const errorData = await res.json();
+							errorMessage += `: ${errorData.message || '알 수 없는 오류'}`;
+						} catch (parseError) {
+							errorMessage += `: HTTP ${res.status}`;
+						}
+						errors.push(errorMessage);
+						console.error(errorMessage);
+					}
+				} catch (e) {
+					failCount++;
+					const errorMessage = `학생 ${student.id} 보강 생성 오류: ${e.message}`;
+					errors.push(errorMessage);
+					console.error(errorMessage, e);
+				}
+			}
+
+			// 결과 알림
+			if (failCount === 0) {
+				alert(`${successCount}명의 보강 일정이 성공적으로 생성되었습니다.`);
+			} else {
+				const errorDetails = errors.length > 0 ? `\n\n오류 상세:\n${errors.slice(0, 3).join('\n')}${errors.length > 3 ? `\n... 외 ${errors.length - 3}개` : ''}` : '';
+				alert(`보강 생성 완료: 성공 ${successCount}명, 실패 ${failCount}명${errorDetails}`);
+			}
+
+			closeCreateForm();
+			dispatch('refresh');
+		} catch (e) {
+			console.error('보강 생성 오류:', e);
+			alert('보강 생성 중 오류가 발생했습니다.');
+		} finally {
+			isCreating = false;
+		}
+	}
+
+	// 보강 생성 요청 (통합)
+	async function createMakeup() {
+		if (isMultipleMode) {
+			await createMultipleMakeups();
+		} else {
+			await createSingleMakeup();
 		}
 	}
 
@@ -484,26 +618,89 @@
 						</select>
 					</div>
 
+					<!-- 여러개 생성 체크박스 -->
 					<div class="form-group">
-						<label for="create-user">학생 선택</label>
-						<select
-							id="create-user"
-							bind:value={createFormData.user_id}
-							required
-							class="form-input"
-							disabled={!selectedClassId}
-						>
-							<option value="">학생을 선택하세요</option>
-							{#each students as student}
-								<option value={student.id}>{student.id}</option>
-							{/each}
-						</select>
-						{#if !selectedClassId}
-							<div class="help-text">먼저 반을 선택해주세요</div>
-						{:else if students.length === 0}
-							<div class="help-text">선택된 반에 학생이 없습니다</div>
-						{/if}
+						<label class="checkbox-label">
+							<input
+								type="checkbox"
+								bind:checked={isMultipleMode}
+								class="checkbox-input"
+							/>
+							<span class="checkbox-text">여러명 선택하여 보강 생성</span>
+						</label>
 					</div>
+
+					{#if isMultipleMode}
+						<!-- 여러명 선택 모드 -->
+						<div class="form-group">
+							<label>학생 선택</label>
+							{#if !selectedClassId}
+								<div class="help-text">먼저 반을 선택해주세요</div>
+							{:else if students.length === 0}
+								<div class="help-text">선택된 반에 학생이 없습니다</div>
+							{:else}
+								<div class="student-selection">
+									{#each students as student}
+										<label class="student-option">
+											<input
+												type="checkbox"
+												bind:group={selectedStudentIds}
+												value={student.id}
+												class="student-checkbox"
+											/>
+											<span class="student-name">{student.id}</span>
+										</label>
+									{/each}
+								</div>
+							{/if}
+						</div>
+
+						<!-- 선택된 학생들 표시 -->
+						{#if selectedStudents.length > 0}
+							<div class="form-group">
+								<label>선택된 학생 ({selectedStudents.length}명)</label>
+								<div class="selected-students">
+									{#each selectedStudents as student}
+										<div class="selected-student">
+											<span class="student-name">{student.id}</span>
+											<button
+												type="button"
+												class="remove-student-btn"
+												on:click={() => removeStudent(student.id)}
+												title="제거"
+											>
+												<svg width="12" height="12" viewBox="0 0 24 24">
+													<path d="M18 6L6 18M6 6l12 12" stroke="currentColor" fill="none" stroke-width="2" />
+												</svg>
+											</button>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+					{:else}
+						<!-- 단일 선택 모드 -->
+						<div class="form-group">
+							<label for="create-user">학생 선택</label>
+							<select
+								id="create-user"
+								bind:value={createFormData.user_id}
+								required
+								class="form-input"
+								disabled={!selectedClassId}
+							>
+								<option value="">학생을 선택하세요</option>
+								{#each students as student}
+									<option value={student.id}>{student.id}</option>
+								{/each}
+							</select>
+							{#if !selectedClassId}
+								<div class="help-text">먼저 반을 선택해주세요</div>
+							{:else if students.length === 0}
+								<div class="help-text">선택된 반에 학생이 없습니다</div>
+							{/if}
+						</div>
+					{/if}
 
 					<div class="form-group">
 						<label for="create-reason">사유 (선택사항)</label>
@@ -539,8 +736,12 @@
 						>
 							취소
 						</button>
-						<button type="submit" class="btn primary" disabled={isCreating}>
-							{isCreating ? '생성 중...' : '보강 생성'}
+						<button 
+							type="submit" 
+							class="btn primary" 
+							disabled={isCreating || !createFormData.start_time || (isMultipleMode ? selectedStudents.length === 0 : !createFormData.user_id)}
+						>
+							{isCreating ? '생성 중...' : isMultipleMode ? `보강 생성 (${selectedStudents.length}명)` : '보강 생성'}
 						</button>
 					</div>
 				</form>
@@ -1343,5 +1544,117 @@
 		font-size: 12px;
 		color: var(--muted);
 		margin-top: 4px;
+	}
+
+	/* 체크박스 스타일 */
+	.checkbox-label {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		font-weight: 600;
+		color: var(--text);
+	}
+
+	.checkbox-input {
+		width: 16px;
+		height: 16px;
+		accent-color: var(--brand);
+		cursor: pointer;
+	}
+
+	.checkbox-text {
+		font-size: 14px;
+	}
+
+	/* 학생 선택 영역 */
+	.student-selection {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+		gap: 8px;
+		max-height: 200px;
+		overflow-y: auto;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		padding: 12px;
+		background: var(--bg);
+	}
+
+	.student-option {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 8px;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		font-size: 13px;
+	}
+
+	.student-option:hover {
+		background: color-mix(in srgb, var(--brand) 10%, transparent);
+	}
+
+	.student-checkbox {
+		width: 14px;
+		height: 14px;
+		accent-color: var(--brand);
+		cursor: pointer;
+	}
+
+	.student-name {
+		font-weight: 500;
+		color: var(--text);
+	}
+
+	/* 선택된 학생들 표시 */
+	.selected-students {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		max-height: 120px;
+		overflow-y: auto;
+		padding: 8px;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		background: color-mix(in srgb, var(--bg) 30%, transparent);
+	}
+
+	.selected-student {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 8px;
+		background: var(--brand);
+		color: white;
+		border-radius: 16px;
+		font-size: 12px;
+		font-weight: 500;
+	}
+
+	.remove-student-btn {
+		background: none;
+		border: none;
+		color: white;
+		cursor: pointer;
+		padding: 2px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.2s ease;
+		width: 16px;
+		height: 16px;
+	}
+
+	.remove-student-btn:hover {
+		background: rgba(255, 255, 255, 0.2);
+		transform: scale(1.1);
+	}
+
+	.remove-student-btn svg {
+		stroke: currentColor;
+		fill: none;
+		stroke-width: 2;
 	}
 </style>
