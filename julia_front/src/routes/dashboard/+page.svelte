@@ -98,12 +98,14 @@
 
 	onMount(async () => {
 		console.log('대시보드 페이지 로드됨');
-		console.log('인증 상태 확인:', isAuthenticated());
-
+		
 		// 로그인 상태 확인
-		if (!isAuthenticated()) {
+		const authenticated = await isAuthenticated();
+		console.log('인증 상태 확인:', authenticated);
+		
+		if (!authenticated) {
 			console.log('인증되지 않음, 로그인 페이지로 이동');
-			goto('/');
+			await goto('/');
 			return;
 		}
 

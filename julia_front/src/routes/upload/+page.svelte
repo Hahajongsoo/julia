@@ -24,6 +24,13 @@
 	const fileProcessorUrl = import.meta.env.VITE_FILE_PROCESSOR_URL || 'http://localhost:5001';
 
 	onMount(async () => {
+		// 로그인 상태 확인
+		const authenticated = await isAuthenticated();
+		if (!authenticated) {
+			await goto('/');
+			return;
+		}
+		
 		await loadCurrentUser();
 	});
 

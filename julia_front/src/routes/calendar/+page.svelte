@@ -103,10 +103,12 @@
 		window.addEventListener('resize', setVh);
 		window.visualViewport && window.visualViewport.addEventListener('resize', setVh);
 
-		// if (!isAuthenticated()) {
-		// 	goto('/');
-		// 	return;
-		// }
+		// 로그인 상태 확인
+		const authenticated = await isAuthenticated();
+		if (!authenticated) {
+			await goto('/');
+			return;
+		}
 		await loadCurrentUser();
 		await loadClassesData();
 		await loadCalendarDataWrapper();
